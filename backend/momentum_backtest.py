@@ -8,9 +8,13 @@ import yfinance as yf
 
 def fetch_data(ticker, start="2020-01-01", end="2024-01-01"):
     try:
-        return yf.download(ticker, start=start, end=end)
-    except Exception:
-        # Fallback dummy data when download fails (e.g., offline)
+        data = yf.download(ticker, start=start, end=end)
+        if data.empty:
+            raise ValueError(f"No data found for ticker {ticker}")
+        return data
+    except Exception as e:
+        print(f"Failed to fetch data for {ticker}: {e}")
+        print("Using simulated data instead...")
         dates = pd.date_range(start=start, end=end, freq="B")
         prices = 100 + np.cumsum(np.random.randn(len(dates)))
         return pd.DataFrame({"Close": prices}, index=dates)
@@ -53,8 +57,8 @@ def calculate_metrics(df: pd.DataFrame, initial_capital: float = 10_000) -> Dict
     return {"CAGR": cagr, "Sharpe": sharpe, "Max Drawdown": max_drawdown}
 
 
-def run_backtest(ticker: str = "AAPL", initial_capital: float = 10_000):
-    df = fetch_data(ticker)
+def run_backtest(ticker: str = "AAPL", initial_capital: float = 10_000, start="2020-01-01", end="2024-01-01"):
+    df = fetch_data(ticker, start=start, end=end)
     df = generate_signals(df)
     df = simulate_returns(df, initial_capital)
     metrics = calculate_metrics(df, initial_capital)
@@ -64,7 +68,15 @@ def run_backtest(ticker: str = "AAPL", initial_capital: float = 10_000):
 
 
 if __name__ == "__main__":
-    ticker = sys.argv[1] if len(sys.argv) > 1 else "AAPL"
-    df, _ = run_backtest(ticker)
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run momentum strategy backtest.")
+    parser.add_argument("--ticker", type=str, default="AAPL", help="Stock ticker symbol")
+    parser.add_argument("--capital", type=float, default=10_000, help="Initial capital")
+    parser.add_argument("--start", type=str, default="2020-01-01", help="Start date (YYYY-MM-DD)")
+    parser.add_argument("--end", type=str, default="2024-01-01", help="End date (YYYY-MM-DD)")
+    args = parser.parse_args()
+
+    df, _ = run_backtest(args.ticker, args.capital, args.start, args.end)
     df.to_csv("backtest_results.csv")
     print(df.tail())

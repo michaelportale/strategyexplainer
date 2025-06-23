@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Poetry files
+poetry.lock
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Jupyter Notebook checkpoints (if added later)
+.ipynb_checkpoints/
+
+# Output files
+backend/outputs/
+backend/backtest_results.csv
+*.png
+*.csv
+
+# VS Code / Editor files
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
