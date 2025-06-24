@@ -1,0 +1,171 @@
+{
+  "strategies": {
+    "sma_ema_rsi": {
+      "enabled": true,
+      "parameters": {
+        "fast_period": 10,
+        "slow_period": 50,
+        "rsi_period": 14,
+        "use_rsi_filter": true,
+        "rsi_oversold": 30,
+        "rsi_overbought": 70
+      }
+    },
+    "crossover": {
+      "enabled": true,
+      "parameters": {
+        "fast_period": 10,
+        "slow_period": 30
+      }
+    },
+    "rsi": {
+      "enabled": true,
+      "parameters": {
+        "rsi_period": 14,
+        "oversold_threshold": 30,
+        "overbought_threshold": 70
+      }
+    },
+    "volatility_breakout": {
+      "enabled": true,
+      "parameters": {
+        "atr_period": 14,
+        "volume_period": 20,
+        "breakout_multiplier": 2.0,
+        "volume_multiplier": 1.5
+      }
+    },
+    "channel_breakout": {
+      "enabled": true,
+      "parameters": {
+        "channel_period": 20,
+        "breakout_threshold": 0.02
+      }
+    },
+    "volume_breakout": {
+      "enabled": true,
+      "parameters": {
+        "volume_period": 20,
+        "volume_multiplier": 2.0,
+        "price_change_threshold": 0.01
+      }
+    },
+    "bollinger_mean_reversion": {
+      "enabled": true,
+      "parameters": {
+        "bb_period": 20,
+        "bb_std_dev": 2.0,
+        "entry_std_dev": 2.0,
+        "exit_std_dev": 0.5
+      }
+    },
+    "zscore_mean_reversion": {
+      "enabled": true,
+      "parameters": {
+        "lookback_period": 50,
+        "z_entry_threshold": 2.0,
+        "z_exit_threshold": 0.5
+      }
+    },
+    "rsi_mean_reversion": {
+      "enabled": true,
+      "parameters": {
+        "rsi_period": 14,
+        "rsi_oversold": 20,
+        "rsi_overbought": 80,
+        "rsi_exit_level": 50
+      }
+    },
+    "mean_reversion_combo": {
+      "enabled": true,
+      "parameters": {
+        "bb_period": 20,
+        "bb_std_dev": 2.0,
+        "rsi_period": 14,
+        "rsi_oversold": 30,
+        "rsi_overbought": 70,
+        "require_both_signals": true
+      }
+    },
+    "sentiment_mean_reversion": {
+      "enabled": true,
+      "parameters": {
+        "bearish_threshold": -0.5,
+        "bullish_threshold": 0.5,
+        "sentiment_period": 3,
+        "require_price_confirmation": true,
+        "price_lookback": 5
+      }
+    }
+  },
+  "backtest": {
+    "initial_capital": 10000,
+    "start_date": "2020-01-01",
+    "end_date": "2024-01-01",
+    "commission": 0.001,
+    "slippage": 0.0005
+  },
+  "risk_management": {
+    "stop_loss_pct": null,
+    "take_profit_pct": null,
+    "max_drawdown_pct": 0.20,
+    "position_size_pct": 1.0,
+    "max_position_per_trade": 0.25,
+    "risk_free_rate": 0.02
+  },
+  "batch_testing": {
+    "default_tickers": ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"],
+    "include_combinations": true,
+    "combination_methods": ["majority", "unanimous", "any"],
+    "save_results": true,
+    "output_directory": "backend/outputs"
+  },
+  "advanced_features": {
+    "regime_detection": {
+      "enabled": true,
+      "default_method": "sma_slope",
+      "parameters": {
+        "sma_slope": {
+          "sma_period": 50,
+          "slope_threshold": 0.0001
+        },
+        "atr_volatility": {
+          "atr_period": 14,
+          "volatility_threshold": 75
+        },
+        "vix_levels": {
+          "low_vix": 15,
+          "high_vix": 25
+        }
+      }
+    },
+    "sentiment_overlay": {
+      "enabled": true,
+      "default_provider": "mock",
+      "providers": {
+        "mock": {
+          "parameters": {}
+        },
+        "newsapi": {
+          "api_key": "your_newsapi_key_here",
+          "parameters": {
+            "sentiment_threshold": 0.1,
+            "article_limit": 10
+          }
+        },
+        "finnhub": {
+          "api_key": "your_finnhub_key_here",
+          "parameters": {
+            "sentiment_threshold": 0.1
+          }
+        }
+      }
+    }
+  },
+  "performance_metrics": {
+    "primary_metric": "sharpe_ratio",
+    "secondary_metrics": ["cagr", "max_drawdown", "win_rate", "profit_factor"],
+    "benchmark": "SPY",
+    "risk_free_rate": 0.02
+  }
+} 
