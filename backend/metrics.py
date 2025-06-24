@@ -2,10 +2,16 @@
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
 from scipy import stats
 import warnings
+import sys
+import os
+import logging
 warnings.filterwarnings('ignore')
+
+# Add the repository root to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.settings import settings
 
@@ -21,6 +27,7 @@ class PerformanceMetrics:
         """
         self.risk_free_rate = risk_free_rate
         self.trading_days_per_year = settings.TRADING_DAYS_PER_YEAR
+        self.logger = logging.getLogger(__name__)
     
     def calculate_all_metrics(self, 
                             equity_curve: pd.DataFrame, 
@@ -199,6 +206,14 @@ class PerformanceMetrics:
         # Maximum drawdown
         max_drawdown = drawdown.min()
         
+        # Validation: Check for impossible drawdown values
+        if max_drawdown < -1.0:  # Drawdown worse than -100%
+            self.logger.warning(f"⚠️  IMPOSSIBLE DRAWDOWN DETECTED: {max_drawdown:.1%}")
+            self.logger.warning(f"   This indicates portfolio went below zero (risk of ruin)")
+            self.logger.warning(f"   Equity range: {equity.min():.2f} to {equity.max():.2f}")
+            # Cap at -100% for reporting purposes
+            max_drawdown = max(max_drawdown, -1.0)
+        
         # Average drawdown
         avg_drawdown = drawdown[drawdown < 0].mean() if (drawdown < 0).any() else 0
         
@@ -266,54 +281,59 @@ class PerformanceMetrics:
     
     def _calculate_trade_metrics(self, trades: pd.DataFrame) -> Dict[str, float]:
         """Calculate trade-based metrics.
-        
+
         Args:
             trades: DataFrame with trade records
-            
+
         Returns:
             Dictionary with trade metrics
         """
         if trades.empty:
             return {}
-        
+
         # Basic trade statistics
         total_trades = len(trades)
         winning_trades = trades[trades['net_pnl'] > 0]
         losing_trades = trades[trades['net_pnl'] < 0]
-        
+
         win_rate = len(winning_trades) / total_trades if total_trades > 0 else 0
         loss_rate = len(losing_trades) / total_trades if total_trades > 0 else 0
-        
+
         # P&L statistics
         avg_win = winning_trades['net_pnl'].mean() if len(winning_trades) > 0 else 0
         avg_loss = losing_trades['net_pnl'].mean() if len(losing_trades) > 0 else 0
         largest_win = winning_trades['net_pnl'].max() if len(winning_trades) > 0 else 0
         largest_loss = losing_trades['net_pnl'].min() if len(losing_trades) > 0 else 0
-        
+
         # Profit factor
         gross_profit = winning_trades['net_pnl'].sum() if len(winning_trades) > 0 else 0
         gross_loss = abs(losing_trades['net_pnl'].sum()) if len(losing_trades) > 0 else 0
         profit_factor = gross_profit / gross_loss if gross_loss != 0 else np.inf
-        
+
         # Expectancy
         expectancy = win_rate * avg_win + loss_rate * avg_loss
-        
+
         # Kelly criterion
-        if avg_loss != 0 and win_rate != 0 and loss_rate != 0:
-            kelly_pct = win_rate - (loss_rate * abs(avg_win / avg_loss))
+        if avg_win != 0 and avg_loss != 0 and win_rate != 0 and loss_rate != 0:
+            kelly_pct = win_rate - (loss_rate * (abs(avg_loss) / avg_win))
         else:
             kelly_pct = 0
-        
+
         # Average trade duration
         avg_duration = trades['duration'].mean() if 'duration' in trades.columns else 0
-        
+
         # Consecutive wins/losses
         consecutive_wins = self._calculate_consecutive_outcomes(trades, 'win')
         consecutive_losses = self._calculate_consecutive_outcomes(trades, 'loss')
-        
+
         # MAR ratio (if available)
-        mar_ratio = 0  # Would need equity curve for this
-        
+        mar_ratio = 0
+        if 'duration' in trades.columns and not trades.empty:
+            total_return = trades['net_pnl'].sum()
+            max_drawdown = min(0, trades['net_pnl'].min())  # Approximation
+            if max_drawdown != 0:
+                mar_ratio = total_return / abs(max_drawdown)
+
         return {
             'total_trades': total_trades,
             'win_rate': win_rate,
@@ -391,35 +411,39 @@ class PerformanceMetrics:
     
     def _get_drawdown_periods(self, in_drawdown: pd.Series) -> List[Dict[str, Any]]:
         """Identify drawdown periods.
-        
+
         Args:
             in_drawdown: Boolean series indicating drawdown periods
-            
+
         Returns:
             List of drawdown period dictionaries
         """
         periods = []
         start_idx = None
-        
+
         for i, is_dd in enumerate(in_drawdown):
             if is_dd and start_idx is None:
                 start_idx = i
             elif not is_dd and start_idx is not None:
                 periods.append({
-                    'start': start_idx,
-                    'end': i - 1,
+                    'start_idx': start_idx,
+                    'end_idx': i - 1,
+                    'start_date': in_drawdown.index[start_idx],
+                    'end_date': in_drawdown.index[i - 1],
                     'duration': i - start_idx
                 })
                 start_idx = None
-        
+
         # Handle case where drawdown continues to the end
         if start_idx is not None:
             periods.append({
-                'start': start_idx,
-                'end': len(in_drawdown) - 1,
+                'start_idx': start_idx,
+                'end_idx': len(in_drawdown) - 1,
+                'start_date': in_drawdown.index[start_idx],
+                'end_date': in_drawdown.index[-1],
                 'duration': len(in_drawdown) - start_idx
             })
-        
+
         return periods
     
     def _calculate_consecutive_outcomes(self, trades: pd.DataFrame, outcome_type: str) -> int:
@@ -467,12 +491,12 @@ class PerformanceMetrics:
         # Calculate average time difference
         time_diffs = pd.Series(equity_curve.index).diff().dropna()
         avg_diff = time_diffs.mean()
-        
-        # Estimate periods per year
+        # If index is not datetime, fallback to trading days
+        if not hasattr(avg_diff, 'days'):
+            return self.trading_days_per_year
         if avg_diff.days >= 1:
             return 365.25 / avg_diff.days
         else:
-            # Sub-daily data
             hours_per_period = avg_diff.total_seconds() / 3600
             return (365.25 * 24) / hours_per_period
     

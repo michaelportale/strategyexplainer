@@ -5,6 +5,11 @@ import numpy as np
 from typing import Dict, Any, List, Tuple, Optional
 from datetime import datetime
 import logging
+import sys
+import os
+
+# Add the repository root to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config.settings import settings
 
@@ -12,11 +17,17 @@ from config.settings import settings
 class TradingSimulator:
     """Simulate trading based on strategy signals."""
     
-    def __init__(self, 
-                 initial_capital: float = 100000,
-                 commission: float = 0.001,
-                 slippage: float = 0.0005,
-                 margin_requirement: float = 1.0):
+    def __init__(
+        self,
+        initial_capital,
+        commission=0.0,
+        slippage=0.0,
+        margin_requirement=1.0,
+        stop_loss_pct: float = None,
+        take_profit_pct: float = None,
+        max_drawdown_pct: float = None,
+        position_size_pct: float = 1.0,
+    ):
         """Initialize the trading simulator.
         
         Args:
@@ -24,11 +35,21 @@ class TradingSimulator:
             commission: Commission rate (as decimal, e.g., 0.001 = 0.1%)
             slippage: Slippage rate (as decimal)
             margin_requirement: Margin requirement (1.0 = no margin)
+            stop_loss_pct: Stop loss percentage (e.g., 0.1 for 10%), None to disable
+            take_profit_pct: Take profit percentage (e.g., 0.2 for 20%), None to disable
+            max_drawdown_pct: Max drawdown percentage before halting (e.g., 0.3 for 30%), None to disable
+            position_size_pct: Fraction of capital to use per trade (default 1.0)
         """
         self.initial_capital = initial_capital
         self.commission = commission
         self.slippage = slippage
         self.margin_requirement = margin_requirement
+        self.stop_loss_pct = stop_loss_pct
+        self.take_profit_pct = take_profit_pct
+        self.max_drawdown_pct = max_drawdown_pct
+        self.position_size_pct = position_size_pct
+        self.peak_equity = self.initial_capital
+        self.halted = False
         self.logger = logging.getLogger(__name__)
         
         # Track state
@@ -43,6 +64,8 @@ class TradingSimulator:
         self.trades = []
         self.equity_curve = []
         self.current_trade = None
+        self.peak_equity = self.initial_capital
+        self.halted = False
         
     def simulate_strategy(self, 
                          price_data: pd.DataFrame, 
@@ -132,7 +155,38 @@ class TradingSimulator:
         
         # Calculate current portfolio value
         portfolio_value = self._calculate_portfolio_value(price)
-        
+
+        # CRITICAL: Enforce no negative equity - halt if portfolio goes to zero or below
+        if portfolio_value <= 0:
+            if not self.halted:
+                self.logger.warning(f"💀 RISK OF RUIN: Portfolio value went to zero or negative ({portfolio_value:.2f}) at {timestamp}")
+                self.logger.warning(f"   Cash: {self.capital:.2f}, Position: {self.position}, Shares: {self.shares}")
+                # Force close all positions
+                if self.position != 0:
+                    self._close_position(timestamp, price, "Risk of ruin - forced liquidation")
+                self.halted = True
+            return
+
+        # Log warnings for dangerous equity levels
+        equity_ratio = portfolio_value / self.initial_capital
+        if equity_ratio < 0.5 and not getattr(self, '_warned_low_equity', False):
+            self.logger.warning(f"⚠️  Portfolio equity down to {equity_ratio:.1%} of initial capital at {timestamp}")
+            self._warned_low_equity = True
+
+        # Max drawdown halt logic
+        self.peak_equity = max(self.peak_equity, portfolio_value)
+        if (
+            self.max_drawdown_pct is not None
+            and self.peak_equity > 0
+            and (self.peak_equity - portfolio_value) / self.peak_equity >= self.max_drawdown_pct
+        ):
+            self.halted = True
+            self.logger.warning(f"🛑 Halting simulation at {timestamp} due to max drawdown ({self.max_drawdown_pct:.1%}).")
+            # Force close all positions when max drawdown is hit
+            if self.position != 0:
+                self._close_position(timestamp, price, "Max drawdown limit reached")
+            return
+
         # Record equity curve
         self.equity_curve.append({
             'timestamp': timestamp,
@@ -141,7 +195,44 @@ class TradingSimulator:
             'cash': self.capital,
             'price': price
         })
-        
+
+        # If simulation is halted, do not process further
+        if self.halted:
+            return
+
+        # Stop-loss / take-profit logic for open positions
+        if self.position != 0 and self.current_trade is not None:
+            entry = self.current_trade['entry_price']
+            side = self.current_trade['side']
+            stop_loss_triggered = False
+            take_profit_triggered = False
+            stop_price = None
+            reason = None
+            # Only check if pct is not None
+            if self.stop_loss_pct is not None:
+                if side == 'long' and price <= entry * (1 - self.stop_loss_pct):
+                    stop_loss_triggered = True
+                    stop_price = entry * (1 - self.stop_loss_pct)
+                elif side == 'short' and price >= entry * (1 + self.stop_loss_pct):
+                    stop_loss_triggered = True
+                    stop_price = entry * (1 + self.stop_loss_pct)
+            if self.take_profit_pct is not None:
+                if side == 'long' and price >= entry * (1 + self.take_profit_pct):
+                    take_profit_triggered = True
+                    stop_price = entry * (1 + self.take_profit_pct)
+                elif side == 'short' and price <= entry * (1 - self.take_profit_pct):
+                    take_profit_triggered = True
+                    stop_price = entry * (1 - self.take_profit_pct)
+            # If both triggered, use the one hit first (conservative: choose worst for us)
+            if stop_loss_triggered:
+                self._close_position(timestamp, stop_price, "Stop loss triggered")
+                self.logger.info(f"Stop loss triggered at {timestamp} at price {stop_price:.2f}")
+                return
+            elif take_profit_triggered:
+                self._close_position(timestamp, stop_price, "Take profit triggered")
+                self.logger.info(f"Take profit triggered at {timestamp} at price {stop_price:.2f}")
+                return
+
         # Process signals
         if signal != 0 and signal != self.position:
             self._execute_signal(timestamp, row, signal)
@@ -180,8 +271,8 @@ class TradingSimulator:
         else:  # Short position
             execution_price = price * (1 - self.slippage)
         
-        # Calculate position size based on available capital
-        position_value = self.capital * abs(signal)  # signal can be fractional position size
+        # Calculate position size based on position_size_pct and available capital
+        position_value = self.capital * self.position_size_pct * abs(signal)
         
         # Account for margin
         required_capital = position_value * self.margin_requirement
@@ -198,6 +289,19 @@ class TradingSimulator:
             total_cost = shares * execution_price
             commission_cost = total_cost * self.commission
             total_with_commission = total_cost + commission_cost
+            
+            # Final safety check: ensure we don't go negative on capital
+            if total_with_commission > self.capital:
+                self.logger.warning(f"⚠️  Position would exceed available capital. Adjusting size.")
+                # Recalculate with maximum available capital
+                max_cost = self.capital * 0.99  # Leave 1% buffer
+                shares = int(max_cost / execution_price)
+                if shares <= 0:
+                    self.logger.warning(f"❌ Insufficient capital to open position. Skipping.")
+                    return
+                total_cost = shares * execution_price
+                commission_cost = total_cost * self.commission
+                total_with_commission = total_cost + commission_cost
             
             # Update state
             self.position = signal
@@ -289,26 +393,20 @@ class TradingSimulator:
     
     def _calculate_portfolio_value(self, current_price: float) -> float:
         """Calculate current portfolio value.
-        
+
         Args:
             current_price: Current market price
-            
+
         Returns:
             Total portfolio value
         """
         cash_value = self.capital
-        
+
         if self.position != 0 and self.shares != 0:
-            # Calculate unrealized P&L
-            position_value = abs(self.shares) * current_price
-            
-            if self.position > 0:  # Long position
-                unrealized_pnl = (current_price - self.entry_price) * abs(self.shares)
-            else:  # Short position
-                unrealized_pnl = (self.entry_price - current_price) * abs(self.shares)
-            
-            return cash_value + position_value + unrealized_pnl
-        
+            # Portfolio value = cash + market value of shares
+            position_value = self.shares * current_price
+            return cash_value + position_value
+
         return cash_value
     
     def get_summary_stats(self) -> Dict[str, Any]:
