@@ -1,10 +1,6 @@
-# 🏛️ QUANT SUITE WAR ROOM: MODULAR STRATEGY ARSENAL
+## Overview
 
-**High signal, modular, edge baked in from step one.**
-
-## 🎯 Overview
-
-This is a weaponized, modular trading strategy framework designed for systematic alpha generation. The architecture provides plug-and-play strategy components that can be combined, filtered, and orchestrated for maximum edge extraction.
+This is a modular trading strategy framework designed for systematic alpha generation. The architecture provides plug-and-play strategy components that can be combined, filtered, and orchestrated for maximum edge extraction.
 
 ### Core Philosophy
 - **Modular**: Every strategy is a self-contained, swappable component
@@ -13,7 +9,7 @@ This is a weaponized, modular trading strategy framework designed for systematic
 - **Scalable**: Batch testing across multiple assets and time periods
 - **Edge-Focused**: Built-in performance analytics and leaderboards
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 backend/
@@ -31,10 +27,10 @@ backend/
 └── data_loader.py               # Data fetching
 
 config/
-└── strategy_config.json         # Strategy parameters & settings
+└── config.yaml                  # Unified configuration file
 ```
 
-## 🚀 Quick Start
+##Quick Start
 
 ### 1. Run the Demo
 ```bash
@@ -56,7 +52,7 @@ python backend/strategy_engine.py --batch AAPL MSFT GOOGL --combinations
 python backend/strategy_engine.py --list-strategies
 ```
 
-## 🎯 Strategy Arsenal
+## Strategy Arsenal
 
 ### Trend/Momentum Strategies
 - **`sma_ema_rsi`**: SMA/EMA crossover with RSI filter
@@ -79,7 +75,7 @@ python backend/strategy_engine.py --list-strategies
 - **Sentiment Overlay**: Filter signals by market sentiment
 - **Strategy Combinations**: Combine multiple strategies with voting logic
 
-## 📊 Usage Examples
+## Usage Examples
 
 ### Basic Strategy Usage
 ```python
@@ -139,9 +135,9 @@ sentiment_strategy = create_sentiment_overlay(
 )
 ```
 
-## 🔧 Configuration
+## Configuration
 
-Edit `config/strategy_config.json` to customize:
+Edit `config/config.yaml` to customize:
 
 ### Strategy Parameters
 ```json
@@ -183,7 +179,7 @@ Edit `config/strategy_config.json` to customize:
 }
 ```
 
-## 🎪 Advanced Architectures
+## Advanced Architectures
 
 ### Multi-Layer Strategy Stack
 ```python
@@ -220,7 +216,7 @@ switching_strategy = RegimeSwitchStrategy(
 )
 ```
 
-## 📈 Performance Analytics
+## Performance Analytics
 
 ### Built-in Metrics
 - **Returns**: Total return, CAGR, period returns
@@ -241,7 +237,7 @@ Results are automatically saved to `backend/outputs/`:
 - `equity_STRATEGY_TICKER_TIMESTAMP.csv`: Equity curves  
 - `trades_STRATEGY_TICKER_TIMESTAMP.csv`: Trade logs
 
-## 🌐 Regime Detection Methods
+## Regime Detection Methods
 
 ### Available Regime Types
 - **`sma_slope`**: Trend regime based on SMA slope
@@ -261,7 +257,7 @@ detector = RegimeDetector('sma_slope', {
 regime_signals = detector.detect_regime(price_data)
 ```
 
-## 💭 Sentiment Integration
+## Sentiment Integration
 
 ### Supported Providers
 - **Mock**: Deterministic sentiment for testing
@@ -278,7 +274,7 @@ class MyCustomSentimentProvider(SentimentProvider):
         return my_sentiment_logic(ticker, date)
 ```
 
-## 🚀 Batch Operations
+## Batch Operations
 
 ### Batch Backtest
 ```python
@@ -302,7 +298,7 @@ results = engine.run_batch_backtest(
 winners = engine.get_strategy_leaderboard(results, 'sharpe_ratio')
 ```
 
-## 🔧 Extending the Framework
+## Extending the Framework
 
 ### Adding New Strategies
 ```python
@@ -327,7 +323,7 @@ class MyCustomStrategy(BaseStrategy):
 STRATEGY_REGISTRY['my_custom'] = MyCustomStrategy
 ```
 
-## 📊 CLI Reference
+## CLI Reference
 
 ### Strategy Engine Commands
 ```bash
@@ -353,7 +349,7 @@ python backend/momentum_backtest.py --strategy crossover --fast-period 5 --slow-
 python backend/momentum_backtest.py --legacy --ticker AAPL
 ```
 
-## 🎯 Best Practices
+## Best Practices
 
 ### Strategy Development
 1. **Start Simple**: Begin with basic strategies, add complexity gradually
@@ -374,7 +370,7 @@ python backend/momentum_backtest.py --legacy --ticker AAPL
 3. **Risk Budgets**: Allocate risk budgets across strategies
 4. **Regular Rebalancing**: Periodically rebalance strategy allocations
 
-## 🚨 Risk Warnings
+## Risk Warnings
 
 - **Backtest Overfitting**: Extensive parameter optimization can lead to overfitting
 - **Regime Changes**: Strategies may fail during unprecedented market conditions
@@ -382,7 +378,7 @@ python backend/momentum_backtest.py --legacy --ticker AAPL
 - **Transaction Costs**: Real trading costs may significantly impact returns
 - **Liquidity**: Strategy capacity depends on underlying asset liquidity
 
-## 🔗 API Integrations
+## API Integrations
 
 ### News Sentiment APIs
 - **NewsAPI**: Get API key from newsapi.org
@@ -392,23 +388,21 @@ python backend/momentum_backtest.py --legacy --ticker AAPL
 - **yfinance**: Default price data source
 - **Custom**: Extend DataLoader for alternative data sources
 
-## 💻 System Requirements
+## System Requirements
 
 - Python 3.8+
 - pandas, numpy, requests
 - yfinance for market data
 - Optional: newsapi, finnhub for sentiment
 
-## 🎉 Getting Started Checklist
+## Getting Started Checklist
 
 - [ ] Clone repository
 - [ ] Install dependencies: `pip install -r requirements.txt`
 - [ ] Run demo: `python demo_strategy_suite.py`
-- [ ] Review config: `config/strategy_config.json`
+- [ ] Review config: `config/config.yaml`
 - [ ] Test individual strategy: `python backend/strategy_engine.py --strategy sma_ema_rsi`
 - [ ] Run batch backtest: `python backend/strategy_engine.py --batch AAPL MSFT`
 - [ ] Analyze results in `backend/outputs/`
 
 ---
-
-**🏛️ Your strategy arsenal is now weaponized and ready for systematic alpha extraction.** 

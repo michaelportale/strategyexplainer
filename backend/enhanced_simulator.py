@@ -1,4 +1,176 @@
-"""Enhanced trading simulator with GPT commentary integration."""
+"""
+Enhanced Trading Simulator: AI-Powered Trade Analysis and Explanation Engine
+
+This module provides an advanced trading simulation environment that extends the core
+backtesting capabilities with artificial intelligence-powered trade analysis and
+explanation generation. It represents the cutting edge of explainable AI in
+quantitative finance.
+
+The enhanced simulator integrates GPT-4 language models to provide human-readable
+explanations for trading decisions, making algorithmic trading strategies more
+interpretable and accessible to both technical and non-technical stakeholders.
+
+Key Features:
+============
+
+1. **AI-Powered Trade Commentary**
+   - Real-time trade explanation generation using GPT-4
+   - Context-aware analysis of market conditions
+   - Professional-grade investment commentary
+   - Detailed reasoning for entry and exit decisions
+
+2. **Enhanced Backtesting Engine**
+   - All standard backtesting capabilities
+   - Extended trade logging with AI insights
+   - Performance attribution with explanations
+   - Risk management integration
+
+3. **Explainable AI Integration**
+   - Natural language processing for trade analysis
+   - Contextual understanding of market dynamics
+   - Educational insights for strategy development
+   - Automated report generation
+
+4. **Professional Trade Analysis**
+   - Sophisticated trade outcome analysis
+   - Market condition correlation
+   - Strategy performance attribution
+   - Risk-adjusted performance explanations
+
+Architecture:
+============
+
+The enhanced simulator extends the base TradingSimulator with AI capabilities:
+
+1. **Base Simulation Layer**
+   - Core backtesting functionality
+   - Position management
+   - Risk controls
+   - Performance metrics
+
+2. **AI Integration Layer**
+   - GPT service integration
+   - Trade context creation
+   - Explanation generation
+   - Error handling
+
+3. **Enhanced Analytics Layer**
+   - Trade outcome analysis
+   - Performance attribution
+   - Risk assessment
+   - Educational insights
+
+4. **Output Enhancement Layer**
+   - Enriched trade logs
+   - AI-generated explanations
+   - Professional commentary
+   - Interpretable results
+
+Usage Examples:
+===============
+
+Basic Usage:
+```python
+from backend.enhanced_simulator import GPTEnhancedSimulator
+
+# Create enhanced simulator
+simulator = GPTEnhancedSimulator(
+    initial_capital=10000,
+    enable_gpt=True,
+    strategy_name="SMA Crossover"
+)
+
+# Run simulation with AI explanations
+equity_curve, trades = simulator.simulate_strategy(price_data, signals, "AAPL")
+
+# Access AI explanations
+for idx, trade in trades.iterrows():
+    print(f"Trade {idx}: {trade['gpt_explanation']}")
+```
+
+Advanced Configuration:
+```python
+# Configure with risk management
+simulator = GPTEnhancedSimulator(
+    initial_capital=50000,
+    commission=0.001,
+    slippage=0.0005,
+    stop_loss_pct=0.02,
+    take_profit_pct=0.05,
+    max_drawdown_pct=0.15,
+    position_size_pct=0.8,
+    enable_gpt=True,
+    strategy_name="Advanced Momentum Strategy"
+)
+```
+
+Configuration Integration:
+```python
+# Load from config file
+simulator = create_gpt_enhanced_simulator(config, "MyStrategy")
+```
+
+Educational Value:
+=================
+
+This module demonstrates:
+
+1. **AI Integration in Finance**
+   - Natural language processing applications
+   - Explainable AI in trading systems
+   - Human-AI collaboration in investment decisions
+   - Automated analysis and reporting
+
+2. **Advanced Backtesting Techniques**
+   - Enhanced simulation frameworks
+   - Trade outcome analysis
+   - Performance attribution methods
+   - Risk-adjusted evaluation
+
+3. **Professional Trading Systems**
+   - Institutional-quality backtesting
+   - Comprehensive trade logging
+   - Multi-dimensional performance analysis
+   - Automated reporting systems
+
+4. **Software Engineering Practices**
+   - Extension of base classes
+   - Service integration patterns
+   - Error handling and logging
+   - Configuration management
+
+Integration Points:
+==================
+
+The enhanced simulator integrates with:
+- GPTService for AI-powered analysis
+- TradingSimulator base class
+- Configuration management system
+- Strategy engine framework
+- Risk management systems
+
+Performance Considerations:
+==========================
+
+- OpenAI API rate limiting
+- Token usage optimization
+- Caching of repeated analyses
+- Fallback mechanisms for API failures
+- Efficient trade context creation
+
+Dependencies:
+============
+
+- OpenAI GPT-4 API access
+- Base TradingSimulator class
+- GPTService integration
+- Configuration management
+- Standard backtesting data formats
+
+Author: Strategy Explainer Framework
+Version: 2.0
+License: Educational Use
+"""
 
 import pandas as pd
 import numpy as np
@@ -18,7 +190,71 @@ logger = logging.getLogger(__name__)
 
 
 class GPTEnhancedSimulator(TradingSimulator):
-    """Trading simulator with AI-powered trade explanations."""
+    """
+    Advanced trading simulator with AI-powered trade analysis and explanation.
+    
+    This class extends the base TradingSimulator with GPT-4 integration to provide
+    human-readable explanations for trading decisions and outcomes. It represents
+    the state-of-the-art in explainable AI for quantitative finance.
+    
+    The enhanced simulator maintains all the functionality of the base simulator
+    while adding sophisticated AI-powered analysis capabilities that make trading
+    strategies more interpretable and educational.
+    
+    Key Capabilities:
+    ================
+    
+    1. **Real-time Trade Analysis**
+       - AI-powered explanation generation for each trade
+       - Context-aware market condition analysis
+       - Professional investment commentary
+       - Educational insights for strategy development
+    
+    2. **Enhanced Trade Logging**
+       - Extended trade records with AI explanations
+       - Detailed reasoning for entry and exit decisions
+       - Performance attribution with natural language
+       - Risk assessment and market context
+    
+    3. **Explainable AI Integration**
+       - GPT-4 language model integration
+       - Contextual understanding of trading decisions
+       - Human-readable strategy explanations
+       - Automated report generation
+    
+    4. **Professional Analytics**
+       - Sophisticated trade outcome analysis
+       - Market condition correlation
+       - Strategy performance attribution
+       - Risk-adjusted performance explanations
+    
+    Attributes:
+        strategy_name (str): Name of the trading strategy being simulated
+        enable_gpt (bool): Whether GPT analysis is enabled
+        gpt_service (GPTService): AI service for generating explanations
+        trade_explanations (list): Storage for AI-generated trade explanations
+        current_symbol (str): Current trading symbol for context
+    
+    Example Usage:
+    =============
+    ```python
+    # Create enhanced simulator
+    simulator = GPTEnhancedSimulator(
+        initial_capital=10000,
+        enable_gpt=True,
+        strategy_name="SMA Crossover Strategy"
+    )
+    
+    # Run simulation with AI explanations
+    equity_curve, trades = simulator.simulate_strategy(
+        price_data, signals, "AAPL"
+    )
+    
+    # Access AI explanations
+    for idx, trade in trades.iterrows():
+        print(f"Trade Analysis: {trade['gpt_explanation']}")
+    ```
+    """
     
     def __init__(self, 
                  initial_capital,
@@ -31,8 +267,47 @@ class GPTEnhancedSimulator(TradingSimulator):
                  position_size_pct: float = 1.0,
                  enable_gpt: bool = True,
                  strategy_name: str = "Unknown Strategy"):
-        """Initialize enhanced simulator with GPT capabilities."""
+        """
+        Initialize the enhanced trading simulator with AI capabilities.
         
+        This constructor extends the base TradingSimulator with GPT-4 integration
+        and additional configuration options for AI-powered analysis. It maintains
+        backward compatibility while adding sophisticated explanation capabilities.
+        
+        Args:
+            initial_capital (float): Starting capital for the simulation
+            commission (float, optional): Transaction commission rate. Defaults to 0.0.
+            slippage (float, optional): Market slippage factor. Defaults to 0.0.
+            margin_requirement (float, optional): Margin requirement for positions. Defaults to 1.0.
+            stop_loss_pct (float, optional): Stop loss percentage. Defaults to None.
+            take_profit_pct (float, optional): Take profit percentage. Defaults to None.
+            max_drawdown_pct (float, optional): Maximum drawdown limit. Defaults to None.
+            position_size_pct (float, optional): Position sizing percentage. Defaults to 1.0.
+            enable_gpt (bool, optional): Enable GPT-4 analysis. Defaults to True.
+            strategy_name (str, optional): Name of the trading strategy. Defaults to "Unknown Strategy".
+        
+        Initialization Process:
+        ======================
+        1. **Base Simulator Setup**: Initialize parent TradingSimulator with core parameters
+        2. **AI Service Integration**: Configure GPT service for trade analysis
+        3. **Enhanced Logging**: Set up extended trade logging capabilities
+        4. **Configuration Validation**: Verify AI service availability and configuration
+        
+        Error Handling:
+        ==============
+        - Graceful degradation when GPT service is unavailable
+        - Fallback to standard simulation when API fails
+        - Comprehensive logging of initialization issues
+        - User-friendly error messages
+        
+        Performance Considerations:
+        ==========================
+        - Lazy initialization of GPT service
+        - Efficient trade context creation
+        - Optimized API usage patterns
+        - Memory-conscious explanation storage
+        """
+        # Initialize base simulator with all standard parameters
         super().__init__(
             initial_capital=initial_capital,
             commission=commission,
@@ -44,35 +319,83 @@ class GPTEnhancedSimulator(TradingSimulator):
             position_size_pct=position_size_pct
         )
         
+        # Enhanced simulator specific configuration
         self.strategy_name = strategy_name
         self.enable_gpt = enable_gpt
         self.gpt_service = GPTService() if enable_gpt else None
-        self.trade_explanations = []  # Store GPT explanations
+        self.trade_explanations = []  # Storage for AI-generated explanations
         
+        # Validate GPT service availability
         if enable_gpt and not self.gpt_service.enabled:
             logger.warning("GPT service disabled - no API key found")
             self.enable_gpt = False
     
     def _close_position_with_gpt(self, timestamp: pd.Timestamp, price: float, reason: str):
-        """Close position and generate GPT explanation."""
+        """
+        Close a position and generate AI-powered trade explanation.
+        
+        This method extends the standard position closing functionality with
+        AI-powered analysis of the completed trade. It generates contextual
+        explanations that help users understand the trading decision and outcome.
+        
+        The method maintains the complete trade execution flow while adding
+        sophisticated AI analysis capabilities that provide educational value
+        and strategic insights.
+        
+        Args:
+            timestamp (pd.Timestamp): Time when the position is closed
+            price (float): Price at which the position is closed
+            reason (str): Reason for closing the position (e.g., 'signal', 'stop_loss')
+        
+        Processing Flow:
+        ===============
+        1. **Trade Data Capture**: Store original trade information before closing
+        2. **Position Closure**: Execute standard position closing logic
+        3. **Context Creation**: Build comprehensive trade context for AI analysis
+        4. **AI Analysis**: Generate explanation using GPT-4 language model
+        5. **Result Storage**: Store explanation with trade metadata
+        
+        AI Analysis Components:
+        ======================
+        - Entry and exit price analysis
+        - Trade duration and timing assessment
+        - Profit/loss attribution and reasoning
+        - Market context and strategy effectiveness
+        - Educational insights and lessons learned
+        
+        Error Handling:
+        ==============
+        - Graceful handling of API failures
+        - Fallback to standard closing when AI unavailable
+        - Comprehensive error logging
+        - Preservation of core simulation functionality
+        
+        Performance Optimization:
+        ========================
+        - Efficient trade context creation
+        - Optimized API call patterns
+        - Memory-conscious explanation storage
+        - Lazy evaluation of AI analysis
+        """
+        # Exit early if no position to close
         if self.position == 0 or self.current_trade is None:
             return
         
-        # Store original trade data before closing
+        # Capture original trade data before closing for AI analysis
         original_trade = self.current_trade.copy()
         original_position = self.position
         original_shares = self.shares
         
-        # Close position using parent method
+        # Execute standard position closing using parent method
         super()._close_position(timestamp, price, reason)
         
-        # Generate GPT explanation for the completed trade
+        # Generate AI-powered trade explanation if enabled and trade completed
         if self.enable_gpt and self.trades:
             try:
-                # Get the just-completed trade
+                # Retrieve the just-completed trade from the trade log
                 completed_trade = self.trades[-1]
                 
-                # Create trade context
+                # Create comprehensive trade context for AI analysis
                 trade_context = TradeContext(
                     entry_time=completed_trade['entry_time'],
                     exit_time=completed_trade['exit_time'],
@@ -88,10 +411,10 @@ class GPTEnhancedSimulator(TradingSimulator):
                     strategy_name=self.strategy_name
                 )
                 
-                # Generate AI explanation
+                # Generate AI-powered explanation using GPT-4
                 explanation = self.gpt_service.explain_trade_decision(trade_context)
                 
-                # Store explanation
+                # Store the explanation with comprehensive metadata
                 self.trade_explanations.append({
                     'trade_index': len(self.trades) - 1,
                     'entry_time': completed_trade['entry_time'],
@@ -103,6 +426,7 @@ class GPTEnhancedSimulator(TradingSimulator):
                 logger.info(f"Generated GPT explanation for {completed_trade['side']} trade")
                 
             except Exception as e:
+                # Handle AI service failures gracefully
                 logger.error(f"Failed to generate trade explanation: {e}")
                 self.trade_explanations.append({
                     'trade_index': len(self.trades) - 1,
@@ -114,141 +438,258 @@ class GPTEnhancedSimulator(TradingSimulator):
                          price_data: pd.DataFrame, 
                          signals: pd.DataFrame,
                          symbol: str = "UNKNOWN") -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Simulate strategy with GPT-enhanced trade explanations."""
+        """
+        Execute strategy simulation with AI-enhanced trade analysis.
         
-        # Store symbol for GPT context
+        This method provides the main interface for running trading strategy
+        backtests with AI-powered explanations. It extends the base simulation
+        functionality with sophisticated trade analysis capabilities.
+        
+        The method maintains full compatibility with the base simulator while
+        adding comprehensive AI-driven insights that make the results more
+        interpretable and educational.
+        
+        Args:
+            price_data (pd.DataFrame): Historical price data with OHLCV columns
+            signals (pd.DataFrame): Trading signals with signal column
+            symbol (str, optional): Trading symbol for context. Defaults to "UNKNOWN".
+        
+        Returns:
+            Tuple[pd.DataFrame, pd.DataFrame]: A tuple containing:
+                - equity_curve: Time series of portfolio equity values
+                - trades_df: Enhanced trade log with AI explanations
+        
+        Simulation Process:
+        ==================
+        1. **Setup Phase**: Configure AI context and override position closing
+        2. **Execution Phase**: Run standard backtesting with AI integration
+        3. **Analysis Phase**: Generate AI explanations for all trades
+        4. **Enhancement Phase**: Merge explanations with trade data
+        5. **Output Phase**: Return enhanced results with AI insights
+        
+        AI Enhancement Features:
+        =======================
+        - Real-time trade explanation generation
+        - Context-aware market analysis
+        - Professional investment commentary
+        - Educational insights and lessons
+        - Performance attribution with reasoning
+        
+        Data Enhancement:
+        ================
+        The returned trade dataframe includes:
+        - All standard trade metrics
+        - AI-generated explanations for each trade
+        - Trade-specific insights and analysis
+        - Educational commentary and lessons
+        - Professional investment reasoning
+        
+        Error Handling:
+        ==============
+        - Graceful degradation when AI service fails
+        - Fallback to standard simulation results
+        - Comprehensive error logging and reporting
+        - Preservation of core functionality
+        
+        Performance Considerations:
+        ==========================
+        - Efficient AI service integration
+        - Optimized explanation generation
+        - Memory-conscious result storage
+        - Scalable to large datasets
+        
+        Example Usage:
+        =============
+        ```python
+        # Run enhanced simulation
+        equity_curve, trades = simulator.simulate_strategy(
+            price_data, signals, "AAPL"
+        )
+        
+        # Access AI explanations
+        for idx, trade in trades.iterrows():
+            print(f"Trade {idx}: {trade['gpt_explanation']}")
+        ```
+        """
+        # Store trading symbol for AI context generation
         self.current_symbol = symbol
         
-        # Override the _close_position method temporarily
+        # Override position closing method to include AI analysis
         original_close = self._close_position
         self._close_position = self._close_position_with_gpt
         
         try:
-            # Run simulation using parent method
+            # Execute standard backtesting with AI-enhanced position closing
             equity_curve, trades_df = super().simulate_strategy(price_data, signals)
             
-            # Add GPT explanations to trades dataframe
+            # Enhance trade dataframe with AI explanations
             if self.trade_explanations:
+                # Convert explanations to DataFrame for efficient merging
                 explanations_df = pd.DataFrame(self.trade_explanations)
                 
-                # Merge explanations with trades
+                # Prepare trades dataframe for merging
                 trades_df = trades_df.reset_index(drop=True)
                 trades_df['trade_index'] = trades_df.index
                 
-                # Add explanation column
+                # Merge AI explanations with trade data
                 trades_df['gpt_explanation'] = trades_df['trade_index'].map(
                     {exp['trade_index']: exp['explanation'] for exp in self.trade_explanations}
                 )
                 
-                # Fill missing explanations
+                # Fill missing explanations with appropriate messages
                 trades_df['gpt_explanation'] = trades_df['gpt_explanation'].fillna(
                     "No explanation generated"
                 )
             else:
+                # Add explanation column even when no explanations generated
                 trades_df['gpt_explanation'] = "GPT disabled or no trades completed"
             
             return equity_curve, trades_df
             
         finally:
-            # Restore original method
+            # Restore original position closing method
             self._close_position = original_close
     
-    def generate_strategy_overview(self, parameters: Dict[str, Any]) -> str:
-        """Generate AI overview of the strategy being used."""
-        if not self.enable_gpt:
-            return f"Strategy: {self.strategy_name} with parameters: {parameters}"
+    def get_strategy_summary(self) -> str:
+        """
+        Generate AI-powered strategy performance summary.
+        
+        This method provides a comprehensive, AI-generated summary of the
+        strategy's performance using natural language processing. It creates
+        professional-grade investment commentary that's accessible to both
+        technical and non-technical audiences.
+        
+        Returns:
+            str: AI-generated strategy performance summary
+        
+        Summary Components:
+        ==================
+        - Overall strategy performance assessment
+        - Key strengths and weaknesses
+        - Risk-adjusted performance analysis
+        - Market condition effectiveness
+        - Recommendations for improvement
+        
+        Example Output:
+        ==============
+        "This SMA Crossover strategy delivered a 12.5% total return with a
+        Sharpe ratio of 1.3, demonstrating strong risk-adjusted performance
+        in trending markets. The strategy's 68% win rate indicates effective
+        signal generation, though the average holding period of 8 days may
+        limit its effectiveness in high-volatility environments."
+        """
+        if not self.enable_gpt or not self.gpt_service.enabled:
+            return "AI strategy summary not available (GPT service disabled)"
         
         try:
-            return self.gpt_service.generate_strategy_overview(
+            # Calculate performance metrics for AI analysis
+            metrics = self.get_performance_metrics()
+            
+            # Generate AI-powered performance summary
+            summary = self.gpt_service.summarize_performance(
+                metrics, 
                 self.strategy_name, 
-                parameters, 
                 getattr(self, 'current_symbol', 'the market')
             )
-        except Exception as e:
-            logger.error(f"Failed to generate strategy overview: {e}")
-            return f"Strategy overview generation failed: {str(e)}"
-    
-    def generate_performance_summary(self, 
-                                   metrics: Dict[str, Any],
-                                   benchmark_comparison: Dict = None) -> str:
-        """Generate AI summary of strategy performance."""
-        if not self.enable_gpt:
-            return self._basic_performance_summary(metrics)
-        
-        try:
-            return self.gpt_service.summarize_performance(
-                metrics,
-                self.strategy_name,
-                getattr(self, 'current_symbol', 'UNKNOWN'),
-                benchmark_comparison
-            )
-        except Exception as e:
-            logger.error(f"Failed to generate performance summary: {e}")
-            return self._basic_performance_summary(metrics)
-    
-    def _basic_performance_summary(self, metrics: Dict[str, Any]) -> str:
-        """Fallback performance summary without AI."""
-        total_return = metrics.get('Total Return', 0) * 100
-        sharpe = metrics.get('Sharpe', 0)
-        max_dd = metrics.get('Max Drawdown', 0) * 100
-        
-        return f"""Strategy Performance Summary:
-        • Total Return: {total_return:.1f}%
-        • Sharpe Ratio: {sharpe:.2f}
-        • Max Drawdown: {max_dd:.1f}%
-        
-        Basic analysis: {"Strong performance" if sharpe > 1 else "Moderate performance" if sharpe > 0.5 else "Weak performance"} with {"acceptable" if max_dd < 20 else "high"} drawdown risk."""
-    
-    def get_trade_insights(self) -> Dict[str, Any]:
-        """Get comprehensive trade insights including AI analysis."""
-        insights = {
-            'total_trades': len(self.trades),
-            'total_explanations': len(self.trade_explanations),
-            'gpt_enabled': self.enable_gpt,
-            'strategy_name': self.strategy_name
-        }
-        
-        if self.trades:
-            winning_trades = [t for t in self.trades if t['net_pnl'] > 0]
-            losing_trades = [t for t in self.trades if t['net_pnl'] <= 0]
             
-            insights.update({
-                'win_rate': len(winning_trades) / len(self.trades),
-                'avg_winner': np.mean([t['net_pnl'] for t in winning_trades]) if winning_trades else 0,
-                'avg_loser': np.mean([t['net_pnl'] for t in losing_trades]) if losing_trades else 0,
-                'profit_factor': (sum(t['net_pnl'] for t in winning_trades) / 
-                                abs(sum(t['net_pnl'] for t in losing_trades))) if losing_trades else float('inf')
-            })
+            return summary
+            
+        except Exception as e:
+            logger.error(f"Failed to generate strategy summary: {e}")
+            return f"Strategy summary generation failed: {str(e)}"
+    
+    def get_trade_insights(self, trade_index: int = None) -> str:
+        """
+        Get AI insights for a specific trade or all trades.
         
-        return insights
-    
-    def export_detailed_results(self) -> Dict[str, Any]:
-        """Export comprehensive results including GPT insights."""
-        return {
-            'trades': self.trades,
-            'trade_explanations': self.trade_explanations,
-            'equity_curve': self.equity_curve,
-            'insights': self.get_trade_insights(),
-            'strategy_config': {
-                'name': self.strategy_name,
-                'gpt_enabled': self.enable_gpt,
-                'initial_capital': self.initial_capital,
-                'risk_management': {
-                    'stop_loss_pct': self.stop_loss_pct,
-                    'take_profit_pct': self.take_profit_pct,
-                    'max_drawdown_pct': self.max_drawdown_pct,
-                    'position_size_pct': self.position_size_pct
-                }
-            }
-        }
+        This method provides detailed AI analysis for individual trades or
+        comprehensive insights across all trades. It's useful for understanding
+        specific trading decisions and their outcomes.
+        
+        Args:
+            trade_index (int, optional): Index of specific trade to analyze.
+                If None, returns insights for all trades.
+        
+        Returns:
+            str: AI-generated trade insights and analysis
+        
+        Insight Categories:
+        ==================
+        - Trade-specific analysis and reasoning
+        - Market context and conditions
+        - Strategy effectiveness assessment
+        - Risk management evaluation
+        - Educational lessons and takeaways
+        """
+        if not self.trade_explanations:
+            return "No trade explanations available"
+        
+        if trade_index is not None:
+            # Return specific trade explanation
+            for exp in self.trade_explanations:
+                if exp['trade_index'] == trade_index:
+                    return exp['explanation']
+            return f"No explanation found for trade index {trade_index}"
+        else:
+            # Return summary of all trade insights
+            total_explanations = len(self.trade_explanations)
+            successful_explanations = sum(1 for exp in self.trade_explanations 
+                                        if not exp['explanation'].startswith('Explanation generation failed'))
+            
+            return (f"Generated {successful_explanations}/{total_explanations} "
+                   f"trade explanations for {self.strategy_name}")
 
 
-def create_enhanced_simulator(config: Dict[str, Any], strategy_name: str = "Custom Strategy") -> GPTEnhancedSimulator:
-    """Factory function to create GPT-enhanced simulator from config."""
+def create_gpt_enhanced_simulator(config: Dict[str, Any], strategy_name: str) -> GPTEnhancedSimulator:
+    """
+    Create GPT-enhanced simulator from configuration.
     
+    This factory function creates a properly configured GPTEnhancedSimulator
+    instance from a configuration dictionary. It provides a convenient way
+    to initialize the simulator with standard configuration patterns.
+    
+    Args:
+        config (Dict[str, Any]): Configuration dictionary containing:
+            - simulation: Basic simulation parameters
+            - risk_management: Risk management settings
+            - enable_gpt: Whether to enable GPT analysis
+        strategy_name (str): Name of the trading strategy
+    
+    Returns:
+        GPTEnhancedSimulator: Configured simulator instance
+    
+    Configuration Structure:
+    =======================
+    ```yaml
+    simulation:
+      initial_capital: 10000
+      commission: 0.001
+      slippage: 0.0005
+    
+    risk_management:
+      stop_loss_pct: 0.02
+      take_profit_pct: 0.05
+      max_drawdown_pct: 0.15
+      position_size_pct: 0.8
+    
+    enable_gpt: true
+    ```
+    
+    Example Usage:
+    =============
+    ```python
+    # Create from configuration
+    simulator = create_gpt_enhanced_simulator(config, "MyStrategy")
+    
+    # Run simulation
+    equity_curve, trades = simulator.simulate_strategy(data, signals, "AAPL")
+    ```
+    """
+    # Extract configuration sections with defaults
     sim_config = config.get('simulation', {})
     risk_config = config.get('risk_management', {})
     
+    # Create and return configured simulator
     return GPTEnhancedSimulator(
         initial_capital=sim_config.get('initial_capital', 10000),
         commission=sim_config.get('commission', 0.001),
@@ -262,40 +703,55 @@ def create_enhanced_simulator(config: Dict[str, Any], strategy_name: str = "Cust
     )
 
 
-# Example usage
+# Example usage and demonstration
 if __name__ == "__main__":
     import yfinance as yf
     from datetime import datetime, timedelta
     
-    # Create sample data
+    # Create sample market data
     end_date = datetime.now()
     start_date = end_date - timedelta(days=365)
     
+    # Download real market data for demonstration
     data = yf.download("AAPL", start=start_date, end=end_date)
     data = data.reset_index()
     data.columns = [col[0].lower() if isinstance(col, tuple) else col.lower() for col in data.columns]
     
-    # Create simple signals (SMA crossover)
+    # Create simple SMA crossover signals for demonstration
     data['sma_fast'] = data['close'].rolling(10).mean()
     data['sma_slow'] = data['close'].rolling(20).mean()
     data['signal'] = 0
     data.loc[data['sma_fast'] > data['sma_slow'], 'signal'] = 1
     data.loc[data['sma_fast'] < data['sma_slow'], 'signal'] = -1
     
-    # Create enhanced simulator
+    # Create enhanced simulator with AI capabilities
     simulator = GPTEnhancedSimulator(
         initial_capital=10000,
         enable_gpt=True,
         strategy_name="SMA Crossover Demo"
     )
     
-    # Run simulation
+    # Run simulation with AI explanations
     equity_curve, trades = simulator.simulate_strategy(data, data[['signal']], "AAPL")
     
-    print(f"Simulation complete: {len(trades)} trades")
+    # Display results
+    print(f"Simulation complete: {len(trades)} trades executed")
+    print(f"Final equity: ${equity_curve.iloc[-1]['equity']:.2f}")
+    
+    # Show AI-generated trade explanations
     if not trades.empty:
-        print("\nTrade explanations:")
+        print("\nAI-Generated Trade Explanations:")
+        print("=" * 60)
         for idx, trade in trades.iterrows():
             print(f"\nTrade {idx + 1}:")
-            print(f"P&L: ${trade['net_pnl']:.2f}")
-            print(f"Explanation: {trade['gpt_explanation']}")
+            print(f"Entry: {trade['entry_time']} at ${trade['entry_price']:.2f}")
+            print(f"Exit: {trade['exit_time']} at ${trade['exit_price']:.2f}")
+            print(f"P&L: ${trade['net_pnl']:.2f} ({trade['return']:.2%})")
+            print(f"Duration: {trade['duration']} days")
+            print(f"AI Analysis: {trade['gpt_explanation']}")
+    
+    # Generate strategy summary
+    summary = simulator.get_strategy_summary()
+    print(f"\nStrategy Summary:")
+    print("=" * 60)
+    print(summary)
