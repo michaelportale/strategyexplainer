@@ -142,45 +142,54 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 import logging
 
+# Import configuration manager
+from config.config_manager import get_config_manager
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
+# Get configuration manager instance
+config = get_config_manager()
+
+# Load batch backtest configuration
+batch_config = config.get_section('batch_backtest')
+
 # Ensure output directory exists
-OUTPUT_DIR = "backend/outputs"
+OUTPUT_DIR = batch_config.get('output_directory', 'backend/outputs')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ===== HYPERPARAMETER GRID CONFIGURATION =====
-# These parameters define the search space for strategy optimization
-# Modify these arrays to customize your parameter sweep
+# These parameters are now loaded from config.yaml
+# Modify config.yaml to customize your parameter sweep
 
 # Asset universe for cross-validation
-TICKERS = ["AAPL", "MSFT", "SPY", "QQQ", "TSLA"]
+TICKERS = batch_config.get('tickers', ["AAPL", "MSFT", "SPY", "QQQ", "TSLA"])
 
 # Stop loss levels (as percentages) - None means no stop loss
-STOP_LOSSES = [0.02, 0.05, 0.10, None]  # 2%, 5%, 10%, or None
+STOP_LOSSES = batch_config.get('stop_losses', [0.02, 0.05, 0.10, None])
 
 # Take profit levels (as percentages) - None means no take profit
-TAKE_PROFITS = [0.05, 0.10, 0.20, None]  # 5%, 10%, 20%, or None
+TAKE_PROFITS = batch_config.get('take_profits', [0.05, 0.10, 0.20, None])
 
 # Position sizing (percentage of capital per trade)
-POSITION_SIZES = [1.0, 0.75, 0.5]  # 100%, 75%, 50% of capital
+POSITION_SIZES = batch_config.get('position_sizes', [1.0, 0.75, 0.5])
 
 # Maximum portfolio drawdown limits - None means no limit
-MAX_DRAWDOWNS = [None, 0.15, 0.20, 0.25]  # None, 15%, 20%, 25% max portfolio drawdown
+MAX_DRAWDOWNS = batch_config.get('max_drawdowns', [None, 0.15, 0.20, 0.25])
 
 # Backtest configuration
-CAPITAL = 10000  # Starting capital
-START_DATE = "2020-01-01"  # Backtest start date
-END_DATE = "2024-01-01"    # Backtest end date
+CAPITAL = batch_config.get('capital', 10000)  # Starting capital
+START_DATE = batch_config.get('start_date', "2020-01-01")  # Backtest start date
+END_DATE = batch_config.get('end_date', "2024-01-01")    # Backtest end date
 
 # Output file configuration with timestamp
 TIMESTAMP = datetime.now().strftime('%Y%m%d_%H%M%S')
 SUMMARY_CSV = f"{OUTPUT_DIR}/batch_summary_{TIMESTAMP}.csv"
 DETAILED_JSON = f"{OUTPUT_DIR}/batch_detailed_{TIMESTAMP}.json"
 
-# CSV header defining all output columns
-CSV_HEADER = [
+# CSV header defining all output columns (loaded from config or use default)
+CSV_HEADER = batch_config.get('csv_header', [
     # Parameter columns
     "ticker", "stop_loss_pct", "take_profit_pct", "max_drawdown_pct", "position_size_pct",
     
@@ -199,7 +208,7 @@ CSV_HEADER = [
     
     # Execution tracking
     "run_status", "error_message"
-]
+])
 
 
 def parse_metrics_from_output(output: str) -> Dict[str, Any]:
@@ -671,11 +680,13 @@ Examples:
     
     # Configure quick mode for testing and development
     if args.quick:
-        TICKERS = ["AAPL", "SPY"]
-        STOP_LOSSES = [0.05, None]
-        TAKE_PROFITS = [0.10, None]
-        POSITION_SIZES = [1.0, 0.5]
-        MAX_DRAWDOWNS = [None, 0.20]
+        # Load quick mode configuration from config file
+        quick_config = batch_config.get('quick_mode', {})
+        TICKERS = quick_config.get('tickers', ["AAPL", "SPY"])
+        STOP_LOSSES = quick_config.get('stop_losses', [0.05, None])
+        TAKE_PROFITS = quick_config.get('take_profits', [0.10, None])
+        POSITION_SIZES = quick_config.get('position_sizes', [1.0, 0.5])
+        MAX_DRAWDOWNS = quick_config.get('max_drawdowns', [None, 0.20])
         logger.info("🚀 QUICK MODE: Running reduced parameter set for testing")
         logger.info(f"   Combinations: {len(TICKERS)} × {len(STOP_LOSSES)} × {len(TAKE_PROFITS)} × {len(POSITION_SIZES)} × {len(MAX_DRAWDOWNS)} = {len(TICKERS)*len(STOP_LOSSES)*len(TAKE_PROFITS)*len(POSITION_SIZES)*len(MAX_DRAWDOWNS)}")
     

@@ -4,10 +4,13 @@ from typing import Dict
 from datetime import datetime
 import logging
 
-OUTPUT_DIR = "backend/outputs"
-
 # Add the repository root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Load OUTPUT_DIR from configuration
+from config.config_manager import get_config_manager
+config = get_config_manager()
+OUTPUT_DIR = config.get('paths.outputs_dir', 'backend/outputs')
 
 import numpy as np
 import pandas as pd

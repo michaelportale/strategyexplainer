@@ -195,7 +195,7 @@ from pathlib import Path
 import pickle
 import logging
 
-from config.settings import settings
+from config.config_manager import get_config_manager
 
 
 class DataLoader:
@@ -295,12 +295,15 @@ class DataLoader:
         - Memory-conscious initialization
         - Thread-safe operations
         """
-        # Configure cache directory with fallback to settings
-        self.cache_dir = Path(cache_dir or settings.CACHE_DIR)
+        # Get configuration manager
+        config = get_config_manager()
+        
+        # Configure cache directory with fallback to configuration
+        self.cache_dir = Path(cache_dir or config.get('paths.cache_dir', 'data/cache'))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         
         # Load cache configuration from settings
-        self.cache_duration = timedelta(minutes=settings.CACHE_DURATION_MINUTES)
+        self.cache_duration = timedelta(minutes=config.get('data.cache_duration_minutes', 60))
         
         # Initialize logging for monitoring and debugging
         self.logger = logging.getLogger(__name__)

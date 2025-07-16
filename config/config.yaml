@@ -19,6 +19,9 @@ data:
   source: "${DATA_SOURCE:yfinance}"  # Default to yfinance if not set
   benchmark: "${DEFAULT_BENCHMARK:SPY}"
   cache_duration_minutes: 60
+  default_symbols: ["AAPL", "MSFT", "GOOGL"]  # Default symbols for data loading examples
+  max_retries: 3  # Maximum retry attempts for data fetching
+  timeout_seconds: 30  # Timeout for data requests
   
 # File Paths
 paths:
@@ -213,6 +216,48 @@ batch_testing:
   save_results: true
   output_directory: "backend/outputs"
 
+# Batch Backtest Configuration - Hyperparameter Sweep Parameters
+batch_backtest:
+  # Asset universe for cross-validation
+  tickers: ["AAPL", "MSFT", "SPY", "QQQ", "TSLA"]
+  
+  # Stop loss levels (as percentages) - null means no stop loss
+  stop_losses: [0.02, 0.05, 0.10, null]  # 2%, 5%, 10%, or null
+  
+  # Take profit levels (as percentages) - null means no take profit
+  take_profits: [0.05, 0.10, 0.20, null]  # 5%, 10%, 20%, or null
+  
+  # Position sizing (percentage of capital per trade)
+  position_sizes: [1.0, 0.75, 0.5]  # 100%, 75%, 50% of capital
+  
+  # Maximum portfolio drawdown limits - null means no limit
+  max_drawdowns: [null, 0.15, 0.20, 0.25]  # null, 15%, 20%, 25% max portfolio drawdown
+  
+  # Backtest configuration
+  capital: 10000  # Starting capital
+  start_date: "2020-01-01"  # Backtest start date
+  end_date: "2024-01-01"    # Backtest end date
+  
+  # Output configuration
+  output_directory: "backend/outputs"
+  
+  # Quick mode configuration (for testing)
+  quick_mode:
+    tickers: ["AAPL", "SPY"]
+    stop_losses: [0.05, null]
+    take_profits: [0.10, null]
+    position_sizes: [1.0, 0.5]
+    max_drawdowns: [null, 0.20]
+    
+  # CSV output header configuration
+  csv_header: [
+    "ticker", "stop_loss_pct", "take_profit_pct", "max_drawdown_pct", 
+    "position_size_pct", "total_return", "sharpe_ratio", "max_drawdown", 
+    "num_trades", "win_rate", "avg_trade_return", "total_profit", 
+    "total_loss", "profit_factor", "calmar_ratio", "kelly_criterion", 
+    "run_status", "error_message"
+  ]
+
 # Advanced Features
 advanced_features:
   regime_detection:
@@ -267,4 +312,38 @@ defaults:
   threshold: 0.02
   position_size: 0.1
   stop_loss: 0.05
-  take_profit: 0.10 
+  take_profit: 0.10
+
+# UI Configuration - Charts and Styling
+ui:
+  charts:
+    colors:
+      primary: "#1f77b4"
+      secondary: "#ff7f0e"
+      success: "#2ca02c"
+      danger: "#d62728"
+      warning: "#ff7f0e"
+      info: "#17a2b8"
+      equity_line: "#2E86AB"
+      benchmark_line: "#A23B72"
+      buy_signal: "#00C851"
+      sell_signal: "#FF4444"
+      volume_bar: "#A8DADC"
+      background: "#FFFFFF"
+      grid: "#F0F0F0"
+      
+  metrics_cards:
+    styling:
+      positive_color: "#00C851"
+      negative_color: "#FF4444"
+      neutral_color: "#33B5E5"
+      background_color: "#FFFFFF"
+      border_color: "#E0E0E0"
+      text_color: "#333333"
+      header_color: "#666666"
+      
+  layout:
+    sidebar_width: 300
+    main_content_padding: 20
+    chart_height: 400
+    card_height: 150 

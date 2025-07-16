@@ -90,19 +90,24 @@ from typing import Dict, Any, Optional, List, Tuple, Union
 import numpy as np
 from datetime import datetime, timedelta
 import plotly.express as px
+from config.config_manager import get_config_manager
 
+
+# Load chart colors from configuration
+config = get_config_manager()
+chart_colors_config = config.get('ui.charts.colors', {})
 
 # Define consistent color palette for financial visualizations
 CHART_COLORS = {
-    'bullish': '#26A69A',      # Teal green for positive/bullish
-    'bearish': '#EF5350',      # Coral red for negative/bearish
-    'primary': '#42A5F5',      # Blue for primary data series
-    'secondary': '#66BB6A',    # Light green for secondary series
-    'neutral': '#9E9E9E',      # Gray for neutral/benchmark data
-    'background': '#FAFAFA',   # Light background
-    'grid': '#E0E0E0',         # Grid lines
-    'text': '#333333',         # Primary text
-    'accent': '#FF9800'        # Orange for highlights/accents
+    'bullish': chart_colors_config.get('success', '#26A69A'),      # Teal green for positive/bullish
+    'bearish': chart_colors_config.get('danger', '#EF5350'),       # Coral red for negative/bearish
+    'primary': chart_colors_config.get('primary', '#42A5F5'),      # Blue for primary data series
+    'secondary': chart_colors_config.get('secondary', '#66BB6A'),   # Light green for secondary series
+    'neutral': chart_colors_config.get('neutral_color', '#9E9E9E'), # Gray for neutral/benchmark data
+    'background': chart_colors_config.get('background', '#FAFAFA'), # Light background
+    'grid': chart_colors_config.get('grid', '#E0E0E0'),            # Grid lines
+    'text': chart_colors_config.get('text_color', '#333333'),      # Primary text
+    'accent': chart_colors_config.get('warning', '#FF9800')        # Orange for highlights/accents
 }
 
 

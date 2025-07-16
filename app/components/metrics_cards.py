@@ -74,19 +74,24 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 from datetime import datetime, timedelta
+from config.config_manager import get_config_manager
 
+
+# Load metrics styling from configuration
+config = get_config_manager()
+metrics_styling_config = config.get('ui.metrics_cards.styling', {})
 
 # Define consistent styling for metrics display
 METRICS_STYLING = {
-    'positive_color': '#26A69A',    # Green for good performance
-    'negative_color': '#EF5350',    # Red for poor performance  
-    'neutral_color': '#9E9E9E',     # Gray for neutral values
+    'positive_color': metrics_styling_config.get('positive_color', '#26A69A'),    # Green for good performance
+    'negative_color': metrics_styling_config.get('negative_color', '#EF5350'),    # Red for poor performance  
+    'neutral_color': metrics_styling_config.get('neutral_color', '#9E9E9E'),     # Gray for neutral values
     'background_good': '#E8F5E8',   # Light green background
     'background_bad': '#FFEBEE',    # Light red background
     'background_neutral': '#F5F5F5', # Light gray background
-    'text_primary': '#333333',      # Dark gray for primary text
-    'text_secondary': '#666666',    # Medium gray for secondary text
-    'border_color': '#E0E0E0'       # Light gray for borders
+    'text_primary': metrics_styling_config.get('text_color', '#333333'),      # Dark gray for primary text
+    'text_secondary': metrics_styling_config.get('header_color', '#666666'),    # Medium gray for secondary text
+    'border_color': metrics_styling_config.get('border_color', '#E0E0E0')       # Light gray for borders
 }
 
 
