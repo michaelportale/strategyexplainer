@@ -1,171 +1,17 @@
-"""
-Machine Learning Signal Classification System: AI-Powered Trading Signal Prediction
+"""Machine learning signal classification system for trading signal prediction.
 
-This module provides a comprehensive machine learning framework for predicting trading
-signals using advanced feature engineering and supervised learning techniques. It represents
-the integration of modern machine learning with quantitative trading strategies.
+Provides ML-based trading signal prediction using feature engineering and 
+supervised learning. Compares rule-based vs ML approaches with Random Forest
+and optional XGBoost models.
 
-The system enables comparison between rule-based trading strategies and machine learning
-approaches, providing insights into when AI can enhance traditional technical analysis
-and when human-designed rules may be superior.
-
+Classes:
+    MLSignalClassifier: Main ML classifier for trading signals
+    
 Key Features:
-============
-
-1. **Advanced Feature Engineering**
-   - Technical indicator computation (SMA, EMA, RSI, MACD, Bollinger Bands)
-   - Price momentum and volatility features
-   - Market structure indicators
-   - Volume-based features (when available)
-
-2. **Machine Learning Models**
-   - Random Forest ensemble learning
-   - XGBoost gradient boosting (optional)
-   - Feature importance analysis
-   - Hyperparameter optimization
-
-3. **Signal Prediction & Validation**
-   - Multi-class signal classification (long/short/neutral)
-   - Confidence scoring for predictions
-   - Cross-validation and performance metrics
-   - Backtesting integration
-
-4. **Comparative Analysis**
-   - Rule-based vs ML signal comparison
-   - Agreement rate analysis
-   - Performance attribution
-   - Model interpretation and insights
-
-Architecture:
-============
-
-The ML classifier follows a comprehensive pipeline architecture:
-
-1. **Data Preprocessing Layer**
-   - Market data validation and cleaning
-   - Feature extraction and engineering
-   - Data normalization and scaling
-   - Missing value handling
-
-2. **Model Training Layer**
-   - Supervised learning with historical signals
-   - Feature selection and importance ranking
-   - Cross-validation and performance evaluation
-   - Hyperparameter optimization
-
-3. **Prediction Layer**
-   - Real-time signal generation
-   - Confidence scoring and uncertainty quantification
-   - Model interpretation and explainability
-   - Performance monitoring
-
-4. **Analysis Layer**
-   - Comparative performance analysis
-   - Feature importance visualization
-   - Signal agreement metrics
-   - Model diagnostics and validation
-
-Usage Examples:
-===============
-
-Basic Usage:
-```python
-from backend.ml_classifier import MLSignalClassifier
-
-# Initialize classifier
-classifier = MLSignalClassifier(
-    model_type="random_forest",
-    n_estimators=100,
-    random_state=42
-)
-
-# Train model
-results = classifier.train(price_data, signals_data)
-
-# Generate predictions
-predictions = classifier.predict_signals(new_data)
-
-# Compare with rule-based signals
-comparison = classifier.compare_with_rule_based(
-    price_data, rule_signals
-)
-```
-
-Advanced Usage:
-```python
-# Custom feature engineering
-features = classifier.extract_features(price_data)
-
-# Model interpretation
-importance = classifier.get_feature_importance()
-
-# Performance analysis
-metrics = classifier.evaluate_performance(test_data, test_signals)
-
-# Export trained model
-classifier.save_model("my_trading_model.pkl")
-```
-
-Educational Value:
-=================
-
-This module demonstrates:
-
-1. **Machine Learning in Finance**
-   - Feature engineering for financial data
-   - Supervised learning for trading signals
-   - Model validation and performance evaluation
-   - Overfitting prevention and generalization
-
-2. **Technical Analysis Enhancement**
-   - Traditional indicators as ML features
-   - Pattern recognition through machine learning
-   - Signal quality improvement techniques
-   - Human-AI collaboration in trading
-
-3. **Model Development Best Practices**
-   - Cross-validation methodologies
-   - Feature selection techniques
-   - Performance metrics for classification
-   - Model interpretability and explainability
-
-4. **Quantitative Research Methods**
-   - Hypothesis testing with ML models
-   - Statistical significance assessment
-   - Comparative analysis frameworks
-   - Research methodology in finance
-
-Integration Points:
-==================
-
-The ML classifier integrates with:
-- Trading strategy frameworks
-- Technical analysis libraries
-- Backtesting systems
-- Performance evaluation modules
-- Visualization and reporting tools
-
-Performance Considerations:
-==========================
-
-- Efficient feature computation
-- Scalable model training
-- Real-time prediction capabilities
-- Memory-conscious data processing
-- Cross-platform compatibility
-
-Dependencies:
-============
-
-- scikit-learn for machine learning
-- pandas/numpy for data processing
-- joblib for model serialization
-- Optional: XGBoost for gradient boosting
-- Technical analysis libraries
-
-Author: Strategy Explainer Framework
-Version: 2.0
-License: Educational Use
+    - Technical indicator feature engineering
+    - Multi-class signal classification (long/short/neutral)  
+    - Model comparison and validation
+    - Feature importance analysis
 """
 
 import pandas as pd
@@ -185,44 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class MLSignalClassifier:
-    """
-    Machine learning classifier for predicting trading signals.
-    
-    This class implements a comprehensive machine learning framework for
-    predicting trading signals using advanced feature engineering and
-    supervised learning techniques. It enables comparison between rule-based
-    and ML-based trading approaches.
-    
-    The classifier is designed to work with various market data formats
-    and provides extensive capabilities for model training, evaluation,
-    and deployment in trading systems.
-    
-    Key Capabilities:
-    ================
-    
-    1. **Feature Engineering**
-       - Technical indicator computation
-       - Price momentum and volatility features
-       - Market structure indicators
-       - Volume-based features
-    
-    2. **Model Training**
-       - Random Forest and XGBoost support
-       - Cross-validation and performance metrics
-       - Feature importance analysis
-       - Hyperparameter optimization
-    
-    3. **Signal Prediction**
-       - Multi-class signal classification
-       - Confidence scoring
-       - Real-time prediction capabilities
-       - Uncertainty quantification
-    
-    4. **Comparative Analysis**
-       - Rule-based vs ML comparison
-       - Agreement rate analysis
-       - Performance attribution
-       - Model interpretation
+    """Machine learning classifier for predicting trading signals.
     
     Attributes:
         model_type (str): Type of ML model ('random_forest', 'xgboost')
@@ -231,30 +40,6 @@ class MLSignalClassifier:
         scaler (StandardScaler): Feature scaling transformer
         feature_names (list): Names of engineered features
         is_trained (bool): Whether model has been trained
-        training_score (float): Training accuracy score
-        validation_score (float): Validation accuracy score
-    
-    Example Usage:
-    =============
-    ```python
-    # Initialize classifier
-    classifier = MLSignalClassifier(
-        model_type="random_forest",
-        n_estimators=100,
-        random_state=42
-    )
-    
-    # Train model
-    results = classifier.train(price_data, signals_data)
-    
-    # Generate predictions
-    predictions = classifier.predict_signals(new_data)
-    
-    # Compare with rule-based
-    comparison = classifier.compare_with_rule_based(
-        price_data, rule_signals
-    )
-    ```
     """
     
     def __init__(self, 

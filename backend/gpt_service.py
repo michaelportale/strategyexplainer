@@ -1,194 +1,16 @@
-"""
-GPT-Powered Trading Analysis Service: AI-Driven Financial Commentary Engine
+"""GPT-4 powered trading analysis service for generating trade explanations and insights.
 
-This module provides a sophisticated AI-powered analysis service that leverages OpenAI's
-GPT-4 language model to generate human-readable explanations and insights for trading
-strategies and individual trade decisions. It represents the cutting edge of explainable
-AI in quantitative finance.
+Provides AI-driven financial commentary, trade analysis, and strategy overviews
+using OpenAI's GPT-4 language model.
 
-The service transforms complex quantitative trading data into accessible, professional-grade
-investment commentary that bridges the gap between algorithmic trading systems and
-human understanding.
-
-Key Features:
-============
-
-1. **AI-Powered Trade Analysis**
-   - Individual trade explanation generation
-   - Context-aware market analysis
-   - Professional investment commentary
-   - Educational insights and lessons
-
-2. **Strategy Overview Generation**
-   - High-level strategy explanations
-   - Parameter impact analysis
-   - Market condition suitability
-   - Risk-return trade-off insights
-
-3. **Performance Summary Creation**
-   - Comprehensive performance analysis
-   - Benchmark comparison insights
-   - Risk-adjusted performance commentary
-   - Strategic recommendations
-
-4. **Professional Commentary**
-   - Institutional-quality analysis
-   - Sophisticated financial language
-   - Actionable insights and recommendations
-   - Educational value for learning
-
-Architecture:
-============
-
-The GPT service follows a modular architecture:
-
-1. **Core API Layer**
-   - OpenAI GPT-4 integration
-   - Rate limiting and error handling
-   - Token optimization
-   - Response validation
-
-2. **Analysis Engine**
-   - Trade context processing
-   - Performance metrics analysis
-   - Market condition assessment
-   - Risk evaluation
-
-3. **Commentary Generation**
-   - Natural language processing
-   - Professional writing style
-   - Contextual understanding
-   - Educational explanations
-
-4. **Integration Interface**
-   - Simple API for trading systems
-   - Standardized input/output formats
-   - Error handling and fallbacks
-   - Configuration management
-
-Usage Examples:
-===============
-
-Basic Usage:
-```python
-from backend.gpt_service import GPTService, TradeContext
-
-# Initialize service
-gpt = GPTService()
-
-# Generate strategy overview
-overview = gpt.generate_strategy_overview(
-    "SMA Crossover",
-    {"fast_period": 10, "slow_period": 50},
-    "AAPL"
-)
-
-# Analyze specific trade
-trade_context = TradeContext(
-    entry_time=datetime(2024, 1, 15),
-    exit_time=datetime(2024, 1, 22),
-    symbol="AAPL",
-    side="long",
-    entry_price=185.50,
-    exit_price=192.30,
-    shares=100,
-    net_pnl=680.0,
-    return_pct=0.037,
-    duration_days=7,
-    exit_reason="take_profit",
-    strategy_name="SMA Crossover"
-)
-
-explanation = gpt.explain_trade_decision(trade_context)
-```
-
-Advanced Usage:
-```python
-# Performance summary with benchmark comparison
-metrics = {
-    'Total Return': 0.125,
-    'Sharpe': 1.3,
-    'Max Drawdown': -0.08,
-    'Win Rate': 0.68
-}
-
-summary = gpt.summarize_performance(
-    metrics,
-    "SMA Crossover",
-    "AAPL",
-    benchmark_comparison={'SPY': 0.08}
-)
-```
-
-Educational Value:
-=================
-
-This module demonstrates:
-
-1. **AI Integration in Finance**
-   - Natural language processing applications
-   - Explainable AI in trading systems
-   - Human-AI collaboration patterns
-   - Professional AI deployment
-
-2. **Financial Analysis Automation**
-   - Automated report generation
-   - Investment commentary creation
-   - Performance attribution analysis
-   - Risk assessment communication
-
-3. **API Design Patterns**
-   - Service-oriented architecture
-   - Error handling and resilience
-   - Rate limiting and optimization
-   - Configuration management
-
-4. **Professional Communication**
-   - Financial writing standards
-   - Investment analysis frameworks
-   - Risk communication principles
-   - Educational content creation
-
-Integration Points:
-==================
-
-The service integrates with:
-- OpenAI GPT-4 API
-- Trading simulation systems
-- Performance analysis modules
-- Configuration management
-- Logging and monitoring systems
-
-Performance Considerations:
-==========================
-
-- API rate limiting compliance
-- Token usage optimization
-- Response caching strategies
-- Error handling and fallbacks
-- Cost management and monitoring
-
-Security Considerations:
-=======================
-
-- API key management
-- Data privacy protection
-- Rate limiting enforcement
-- Input validation
-- Output sanitization
-
-Dependencies:
-============
-
-- OpenAI Python library
-- Standard data processing libraries
-- Configuration management
-- Logging infrastructure
-- Error handling frameworks
-
-Author: Strategy Explainer Framework
-Version: 2.0
-License: Educational Use
+Classes:
+    TradeContext: Data structure for trade information
+    GPTService: Main service class for GPT-4 integration
+    
+Key Functions:
+    explain_trade_decision(): Generate trade explanations
+    generate_strategy_overview(): Create strategy summaries
+    summarize_performance(): Generate performance analysis
 """
 
 import openai
@@ -263,105 +85,21 @@ class TradeContext:
 
 
 class GPTService:
-    """
-    AI-powered trading analysis and commentary service.
-    
-    This class provides a comprehensive interface to OpenAI's GPT-4 model
-    for generating sophisticated financial analysis and commentary. It
-    specializes in translating quantitative trading data into human-readable
-    insights and professional investment commentary.
-    
-    The service is designed for integration with trading systems, backtesting
-    frameworks, and portfolio management tools to provide explainable AI
-    capabilities for financial decision-making.
-    
-    Key Capabilities:
-    ================
-    
-    1. **Trade Analysis**
-       - Individual trade explanation generation
-       - Context-aware market analysis
-       - Profit/loss attribution
-       - Risk assessment and insights
-    
-    2. **Strategy Analysis**
-       - High-level strategy explanations
-       - Parameter impact analysis
-       - Market condition suitability
-       - Performance characteristics
-    
-    3. **Performance Commentary**
-       - Comprehensive performance summaries
-       - Benchmark comparisons
-       - Risk-adjusted analysis
-       - Strategic recommendations
-    
-    4. **Professional Communication**
-       - Institutional-quality writing
-       - Educational explanations
-       - Actionable insights
-       - Investment-grade commentary
+    """AI-powered trading analysis service using OpenAI's GPT-4 model.
     
     Attributes:
         api_key (str): OpenAI API key for authentication
         model (str): GPT model to use for analysis
         enabled (bool): Whether the service is operational
         client (openai.OpenAI): OpenAI client instance
-    
-    Example Usage:
-    =============
-    ```python
-    # Initialize service
-    gpt = GPTService()
-    
-    # Generate strategy overview
-    overview = gpt.generate_strategy_overview(
-        "SMA Crossover",
-        {"fast_period": 10, "slow_period": 50},
-        "AAPL"
-    )
-    
-    # Analyze trade
-    explanation = gpt.explain_trade_decision(trade_context)
-    
-    # Summarize performance
-    summary = gpt.summarize_performance(metrics, "MyStrategy", "AAPL")
-    ```
     """
     
     def __init__(self, api_key: str = None, model: str = "gpt-4o-mini"):
-        """
-        Initialize the GPT service with API configuration.
-        
-        This constructor sets up the OpenAI API connection and validates
-        the service configuration. It provides graceful handling of
-        missing API keys and configuration issues.
+        """Initialize GPT service with OpenAI API configuration.
         
         Args:
-            api_key (str, optional): OpenAI API key. If None, uses OPENAI_API_KEY
-                environment variable. Defaults to None.
-            model (str, optional): OpenAI model to use. Defaults to "gpt-4o-mini".
-        
-        Initialization Process:
-        ======================
-        1. **API Key Validation**: Check for valid OpenAI API key
-        2. **Client Setup**: Initialize OpenAI client with authentication
-        3. **Model Configuration**: Set up the specified language model
-        4. **Service Validation**: Verify service availability and configuration
-        
-        Error Handling:
-        ==============
-        - Graceful degradation when API key is missing
-        - Comprehensive logging of initialization issues
-        - Service availability flags for fallback logic
-        - User-friendly error messages
-        
-        Configuration Options:
-        =====================
-        - API key from environment variable or parameter
-        - Model selection (gpt-4o-mini, gpt-4, etc.)
-        - Automatic service enable/disable based on configuration
-        - Fallback mechanisms for service unavailability
+            api_key (str): OpenAI API key (defaults to OPENAI_API_KEY env var)
+            model (str): OpenAI model to use (default: "gpt-4o-mini")
         """
         # Configure API authentication
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')

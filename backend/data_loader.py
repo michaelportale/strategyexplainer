@@ -194,8 +194,20 @@ import os
 from pathlib import Path
 import pickle
 import logging
+import sys
 
 from config.config_manager import get_config_manager
+
+# Add utils to path for logging framework  
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from utils.logging_config import (
+    LoggerManager, 
+    DataError, 
+    ConfigurationError,
+    with_error_handling,
+    with_performance_logging,
+    safe_execute
+)
 
 
 class DataLoader:
@@ -295,23 +307,56 @@ class DataLoader:
         - Memory-conscious initialization
         - Thread-safe operations
         """
-        # Get configuration manager
-        config = get_config_manager()
+        # Initialize logging using centralized framework
+        self.logger = LoggerManager.get_logger('data_loader')
         
-        # Configure cache directory with fallback to configuration
-        self.cache_dir = Path(cache_dir or config.get('paths.cache_dir', 'data/cache'))
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Load cache configuration from settings
-        self.cache_duration = timedelta(minutes=config.get('data.cache_duration_minutes', 60))
-        
-        # Initialize logging for monitoring and debugging
-        self.logger = logging.getLogger(__name__)
+        try:
+            # Get configuration manager
+            config = get_config_manager()
+            
+            # Configure cache directory with fallback to configuration
+            cache_path = cache_dir or config.get('paths.cache_dir', 'data/cache')
+            self.cache_dir = Path(cache_path)
+            
+            # Create cache directory with proper error handling
+            try:
+                self.cache_dir.mkdir(parents=True, exist_ok=True)
+                self.logger.info(f"Cache directory initialized: {self.cache_dir}")
+            except PermissionError:
+                # Fallback to temporary directory
+                import tempfile
+                self.cache_dir = Path(tempfile.gettempdir()) / 'strategy_explainer_cache'
+                self.cache_dir.mkdir(parents=True, exist_ok=True)
+                self.logger.warning(f"Permission denied for cache directory, using temporary: {self.cache_dir}")
+            
+            # Load cache configuration from settings
+            cache_minutes = config.get('data.cache_duration_minutes', 60)
+            self.cache_duration = timedelta(minutes=cache_minutes)
+            
+            # Initialize statistics tracking
+            self.cache_hits = 0
+            self.cache_misses = 0
+            self.data_requests = 0
+            
+            self.logger.info(f"DataLoader initialized with cache duration: {cache_minutes} minutes")
+            
+        except Exception as e:
+            # Fallback configuration if config system fails
+            self.cache_dir = Path('data/cache')
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            self.cache_duration = timedelta(minutes=60)
+            self.cache_hits = 0
+            self.cache_misses = 0
+            self.data_requests = 0
+            
+            self.logger.warning(f"DataLoader initialization with fallback config due to: {str(e)}")
         
         # Log initialization details
         self.logger.info(f"DataLoader initialized with cache directory: {self.cache_dir}")
         self.logger.info(f"Cache duration: {self.cache_duration}")
     
+    @with_error_handling(fallback_value=pd.DataFrame(), log_errors=True)
+    @with_performance_logging(threshold_ms=2000.0)
     def load_stock_data(self, 
                        symbol: str, 
                        start_date: date, 

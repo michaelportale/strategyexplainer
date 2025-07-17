@@ -48,6 +48,34 @@ strategy_definitions:
         position_size: 0.1
         stop_loss: 0.05
         take_profit: 0.10
+      presets:
+        conservative:
+          name: "Conservative"
+          description: "Lower risk with smaller positions and tighter stops"
+          parameters:
+            lookback_period: 30
+            threshold: 0.025
+            position_size: 0.05
+            stop_loss: 0.03
+            take_profit: 0.06
+        moderate:
+          name: "Moderate"
+          description: "Balanced risk-reward with standard parameters"
+          parameters:
+            lookback_period: 20
+            threshold: 0.02
+            position_size: 0.1
+            stop_loss: 0.05
+            take_profit: 0.10
+        aggressive:
+          name: "Aggressive"
+          description: "Higher risk with larger positions and wider stops"
+          parameters:
+            lookback_period: 15
+            threshold: 0.015
+            position_size: 0.2
+            stop_loss: 0.08
+            take_profit: 0.15
         
     rsi_momentum:
       name: "RSI Momentum"
@@ -59,6 +87,37 @@ strategy_definitions:
         position_size: 0.1
         stop_loss: 0.05
         take_profit: 0.10
+      presets:
+        conservative:
+          name: "Conservative"
+          description: "Stricter RSI thresholds with smaller positions"
+          parameters:
+            rsi_period: 21
+            rsi_buy_threshold: 25
+            rsi_sell_threshold: 75
+            position_size: 0.05
+            stop_loss: 0.03
+            take_profit: 0.06
+        moderate:
+          name: "Moderate"
+          description: "Standard RSI parameters with balanced risk"
+          parameters:
+            rsi_period: 14
+            rsi_buy_threshold: 30
+            rsi_sell_threshold: 70
+            position_size: 0.1
+            stop_loss: 0.05
+            take_profit: 0.10
+        aggressive:
+          name: "Aggressive"
+          description: "Relaxed RSI thresholds with larger positions"
+          parameters:
+            rsi_period: 10
+            rsi_buy_threshold: 35
+            rsi_sell_threshold: 65
+            position_size: 0.2
+            stop_loss: 0.08
+            take_profit: 0.15
 
   mean_reversion:
     bollinger_bands:
@@ -70,6 +129,34 @@ strategy_definitions:
         position_size: 0.1
         stop_loss: 0.03
         take_profit: 0.05
+      presets:
+        conservative:
+          name: "Conservative"
+          description: "Wider bands with smaller positions for safer trades"
+          parameters:
+            bb_period: 25
+            bb_std_dev: 2.5
+            position_size: 0.05
+            stop_loss: 0.02
+            take_profit: 0.04
+        moderate:
+          name: "Moderate"
+          description: "Standard Bollinger Band parameters"
+          parameters:
+            bb_period: 20
+            bb_std_dev: 2.0
+            position_size: 0.1
+            stop_loss: 0.03
+            take_profit: 0.05
+        aggressive:
+          name: "Aggressive"
+          description: "Tighter bands with larger positions for more signals"
+          parameters:
+            bb_period: 15
+            bb_std_dev: 1.5
+            position_size: 0.15
+            stop_loss: 0.05
+            take_profit: 0.08
     
     z_score:
       name: "Z-Score Mean Reversion"
@@ -80,6 +167,34 @@ strategy_definitions:
         position_size: 0.1
         stop_loss: 0.03
         take_profit: 0.05
+      presets:
+        conservative:
+          name: "Conservative"
+          description: "Higher Z-score threshold with smaller positions"
+          parameters:
+            lookback_period: 60
+            z_threshold: 2.5
+            position_size: 0.05
+            stop_loss: 0.02
+            take_profit: 0.04
+        moderate:
+          name: "Moderate"
+          description: "Standard Z-score mean reversion parameters"
+          parameters:
+            lookback_period: 50
+            z_threshold: 2.0
+            position_size: 0.1
+            stop_loss: 0.03
+            take_profit: 0.05
+        aggressive:
+          name: "Aggressive"
+          description: "Lower Z-score threshold with larger positions"
+          parameters:
+            lookback_period: 40
+            z_threshold: 1.5
+            position_size: 0.15
+            stop_loss: 0.05
+            take_profit: 0.08
 
   breakout:
     channel_breakout:
@@ -91,6 +206,34 @@ strategy_definitions:
         position_size: 0.1
         stop_loss: 0.04
         take_profit: 0.08
+      presets:
+        conservative:
+          name: "Conservative"
+          description: "Higher breakout threshold with smaller positions"
+          parameters:
+            channel_period: 25
+            breakout_threshold: 0.015
+            position_size: 0.05
+            stop_loss: 0.03
+            take_profit: 0.06
+        moderate:
+          name: "Moderate"
+          description: "Standard channel breakout parameters"
+          parameters:
+            channel_period: 20
+            breakout_threshold: 0.01
+            position_size: 0.1
+            stop_loss: 0.04
+            take_profit: 0.08
+        aggressive:
+          name: "Aggressive"
+          description: "Lower breakout threshold with larger positions"
+          parameters:
+            channel_period: 15
+            breakout_threshold: 0.005
+            position_size: 0.15
+            stop_loss: 0.06
+            take_profit: 0.12
     
     volume_breakout:
       name: "Volume Breakout"
@@ -102,6 +245,37 @@ strategy_definitions:
         position_size: 0.1
         stop_loss: 0.04
         take_profit: 0.08
+      presets:
+        conservative:
+          name: "Conservative"
+          description: "Higher volume threshold with smaller positions"
+          parameters:
+            price_period: 25
+            volume_period: 15
+            volume_multiplier: 2.0
+            position_size: 0.05
+            stop_loss: 0.03
+            take_profit: 0.06
+        moderate:
+          name: "Moderate"
+          description: "Standard volume breakout parameters"
+          parameters:
+            price_period: 20
+            volume_period: 10
+            volume_multiplier: 1.5
+            position_size: 0.1
+            stop_loss: 0.04
+            take_profit: 0.08
+        aggressive:
+          name: "Aggressive"
+          description: "Lower volume threshold with larger positions"
+          parameters:
+            price_period: 15
+            volume_period: 8
+            volume_multiplier: 1.2
+            position_size: 0.15
+            stop_loss: 0.06
+            take_profit: 0.12
 
 # Strategy Engine Configuration (from strategy_config.json)
 strategies:
@@ -190,6 +364,81 @@ strategies:
       sentiment_period: 3
       require_price_confirmation: true
       price_lookback: 5
+
+  # New MACD Strategies
+  macd_crossover:
+    enabled: true
+    parameters:
+      fast_period: 12
+      slow_period: 26
+      signal_period: 9
+      use_zero_filter: false
+      min_histogram_threshold: 0.0
+
+  macd_zero_cross:
+    enabled: true
+    parameters:
+      fast_period: 12
+      slow_period: 26
+      signal_period: 9
+      min_duration: 1
+
+  # New RSI-2 Mean Reversion Strategies
+  rsi2:
+    enabled: true
+    parameters:
+      rsi_period: 2
+      oversold_threshold: 15
+      overbought_threshold: 85
+      exit_threshold: 50
+      use_trend_filter: false
+      trend_ma_period: 50
+      max_hold_days: 5
+
+  rsi2_trend_filtered:
+    enabled: true
+    parameters:
+      rsi_period: 2
+      oversold_threshold: 20
+      overbought_threshold: 80
+      exit_threshold: 50
+      trend_ma_period: 50
+      trend_ma_type: "ema"
+      min_trend_strength: 0.02
+
+  # New ADX Trend Filter Strategies
+  adx_trend_filter:
+    enabled: true
+    parameters:
+      adx_period: 14
+      adx_threshold: 25
+      ma_fast: 10
+      ma_slow: 30
+      ma_type: "ema"
+      use_di_filter: true
+      min_di_separation: 2.0
+
+  adx_directional:
+    enabled: true
+    parameters:
+      adx_period: 14
+      adx_threshold: 25
+      di_crossover_threshold: 5.0
+      use_adx_slope_filter: true
+      adx_slope_period: 3
+
+  adx_combo:
+    enabled: true
+    parameters:
+      adx_period: 14
+      adx_threshold: 25
+      ma_period: 20
+      rsi_period: 14
+      rsi_neutral_low: 45
+      rsi_neutral_high: 55
+      volume_ma_period: 20
+      volume_threshold: 1.2
+      require_all_confirmations: true
 
 # Backtest Configuration
 backtest:

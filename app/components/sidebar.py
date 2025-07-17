@@ -63,10 +63,16 @@ results = strategy.backtest(config['data_range'], config['ticker'])
 import streamlit as st
 from typing import Dict, Any, List, Optional, Tuple
 import yaml
+import logging
+import sys
+import os
 from pathlib import Path
 from config.config_manager import get_config_manager
 from datetime import datetime, timedelta
 import pandas as pd
+
+# Initialize logging for frontend component
+logger = logging.getLogger(__name__)
 
 
 def load_strategy_configs() -> Dict[str, Any]:
@@ -114,22 +120,27 @@ def load_strategy_configs() -> Dict[str, Any]:
         strategy_configs = config_manager.get_strategy_definitions()
         
         if not strategy_configs:
+            logger.warning("No strategy configurations found in config manager")
             st.warning("⚠️ No strategy configurations found. Using default settings.")
             return _get_default_strategy_configs()
-            
+        
+        logger.info(f"Successfully loaded {len(strategy_configs)} strategy configurations")
         return strategy_configs
         
     except FileNotFoundError as e:
+        logger.error(f"Configuration file not found: {e}")
         st.error(f"❌ Configuration file not found: {e}")
         st.info("💡 Using default strategy configurations.")
         return _get_default_strategy_configs()
         
     except yaml.YAMLError as e:
+        logger.error(f"YAML configuration error: {e}")
         st.error(f"❌ Configuration file format error: {e}")
         st.info("💡 Please check your config.yaml file format.")
         return _get_default_strategy_configs()
         
     except Exception as e:
+        logger.error(f"Unexpected error loading strategy configurations: {e}", exc_info=True)
         st.error(f"❌ Failed to load strategy configurations: {e}")
         st.info("💡 Contact administrator if this problem persists.")
         return _get_default_strategy_configs()
@@ -259,11 +270,18 @@ def render_strategy_selection() -> Tuple[Optional[str], Optional[str], Optional[
 
 
 def render_parameter_inputs(strategy_config: Dict[str, Any]) -> Dict[str, Any]:
-    """Render dynamic parameter input controls for the selected strategy.
+    """Render dynamic parameter input controls with preset selection for the selected strategy.
     
     This function creates appropriate Streamlit input widgets based on the strategy's
-    parameter configuration. It supports various parameter types including integers,
-    floats, booleans, and selections, with proper validation and default values.
+    parameter configuration, now enhanced with preset functionality allowing users to
+    choose from Conservative, Moderate, or Aggressive parameter profiles.
+    
+    ENHANCED FEATURES:
+    =================
+    - Preset Selection: Choose from pre-configured parameter sets
+    - Custom Parameters: Manually configure individual parameters
+    - Real-time Updates: Preset selection auto-populates parameters
+    - Parameter Override: Ability to customize preset parameters
     
     PARAMETER TYPES SUPPORTED:
     =========================
@@ -273,121 +291,174 @@ def render_parameter_inputs(strategy_config: Dict[str, Any]) -> Dict[str, Any]:
     - Selection parameters: Using selectbox for enumerated choices
     - Range parameters: Using slider for bounded numeric inputs
     
-    VALIDATION FEATURES:
-    ===================
-    - Min/max bounds enforcement for numeric parameters
-    - Default value initialization from configuration
-    - Input format validation and error messaging
-    - Real-time parameter dependency checking
+    PRESET SYSTEM:
+    =============
+    - Conservative: Lower risk, smaller positions, tighter stops
+    - Moderate: Balanced risk-reward, standard parameters
+    - Aggressive: Higher risk, larger positions, wider stops
+    - Custom: User-defined parameter configuration
     
     Args:
         strategy_config (Dict[str, Any]): Strategy configuration containing parameter definitions
-                                        Expected format: {'parameters': {'param_name': {'default': ..., 'min': ..., 'max': ...}}}
+                                        Expected format: {'parameters': {...}, 'presets': {...}}
     
     Returns:
         Dict[str, Any]: User-configured parameter values for strategy initialization
-                       Keys match parameter names, values are user-selected values
-                       
-    Example:
-        strategy_config = {
-            'parameters': {
-                'sma_short': {'default': 20, 'min': 5, 'max': 50},
-                'rsi_period': {'default': 14, 'min': 5, 'max': 30},
-                'use_filter': {'default': True, 'type': 'boolean'}
-            }
-        }
-        
-        params = render_parameter_inputs(strategy_config)
-        # Returns: {'sma_short': 25, 'rsi_period': 14, 'use_filter': False}
+                       Includes preset selection and individual parameter overrides
     """
     st.sidebar.header("⚙️ Strategy Parameters")
     
     parameters = strategy_config.get('parameters', {})
+    presets = strategy_config.get('presets', {})
+    
     if not parameters:
         st.sidebar.info("ℹ️ This strategy uses default parameters")
         return {}
     
+    # Enhanced Preset Selection Interface
+    # ====================================
+    selected_preset = None
+    preset_params = {}
+    
+    if presets:
+        st.sidebar.subheader("🎯 Risk Profile")
+        
+        # Create preset options with descriptions
+        preset_options = ["Custom"] + list(presets.keys())
+        preset_labels = {
+            "Custom": "🔧 Custom Parameters",
+            "conservative": "🛡️ Conservative (Lower Risk)",
+            "moderate": "⚖️ Moderate (Balanced)",
+            "aggressive": "🚀 Aggressive (Higher Risk)"
+        }
+        
+        # Preset selection with enhanced UI
+        selected_preset = st.sidebar.selectbox(
+            "Select Risk Profile",
+            options=preset_options,
+            format_func=lambda x: preset_labels.get(x, x.title()),
+            help="Choose a pre-configured risk profile or customize parameters manually"
+        )
+        
+        # Display preset description
+        if selected_preset != "Custom" and selected_preset in presets:
+            preset_info = presets[selected_preset]
+            st.sidebar.info(f"ℹ️ {preset_info.get('description', 'Pre-configured parameter set')}")
+            preset_params = preset_info.get('parameters', {})
+            
+            # Show preset values in an expandable section
+            with st.sidebar.expander("📋 Preset Values", expanded=False):
+                for param_name, value in preset_params.items():
+                    st.markdown(f"• **{_format_parameter_label(param_name)}**: {value}")
+        
+        st.sidebar.markdown("---")
+        
+        # Allow parameter customization for presets
+        if selected_preset != "Custom":
+            show_custom = st.sidebar.checkbox(
+                "🔧 Customize Parameters", 
+                value=False,
+                help="Fine-tune the selected preset parameters"
+            )
+        else:
+            show_custom = True
+    else:
+        show_custom = True
+    
     user_params = {}
     
     # Create input widgets for each parameter
-    for param_name, param_config in parameters.items():
-        if not isinstance(param_config, dict):
-            continue
+    if show_custom:
+        for param_name, param_config in parameters.items():
+            if not isinstance(param_config, dict):
+                continue
             
-        # Extract parameter configuration
-        default_value = param_config.get('default', 0)
-        param_type = param_config.get('type', 'number')
-        min_value = param_config.get('min', None)
-        max_value = param_config.get('max', None)
-        step = param_config.get('step', None)
-        help_text = param_config.get('help', f"Configure {param_name.replace('_', ' ')}")
-        
-        # Create appropriate input widget based on parameter type
-        if param_type == 'boolean' or isinstance(default_value, bool):
-            # Boolean checkbox input
-            user_params[param_name] = st.sidebar.checkbox(
-                _format_parameter_label(param_name),
-                value=bool(default_value),
-                help=help_text
-            )
-            
-        elif param_type == 'select' and 'options' in param_config:
-            # Selection dropdown input
-            options = param_config['options']
-            default_index = 0
-            if default_value in options:
-                default_index = options.index(default_value)
-                
-            user_params[param_name] = st.sidebar.selectbox(
-                _format_parameter_label(param_name),
-                options=options,
-                index=default_index,
-                help=help_text
-            )
-            
-        elif param_type == 'slider' or (min_value is not None and max_value is not None):
-            # Slider input for bounded ranges
-            if isinstance(default_value, float):
-                step = step or 0.1
-                user_params[param_name] = st.sidebar.slider(
-                    _format_parameter_label(param_name),
-                    min_value=float(min_value) if min_value is not None else 0.0,
-                    max_value=float(max_value) if max_value is not None else 100.0,
-                    value=float(default_value),
-                    step=step,
-                    help=help_text
-                )
+            # Use preset value as default if available, otherwise use config default
+            if selected_preset and selected_preset != "Custom" and param_name in preset_params:
+                default_value = preset_params[param_name]
             else:
-                user_params[param_name] = st.sidebar.slider(
+                default_value = param_config.get('default', 0)
+                
+            # Extract parameter configuration
+            param_type = param_config.get('type', 'number')
+            min_value = param_config.get('min', None)
+            max_value = param_config.get('max', None)
+            step = param_config.get('step', None)
+            help_text = param_config.get('help', f"Configure {param_name.replace('_', ' ')}")
+            
+            # Create appropriate input widget based on parameter type
+            if param_type == 'boolean' or isinstance(default_value, bool):
+                # Boolean checkbox input
+                user_params[param_name] = st.sidebar.checkbox(
                     _format_parameter_label(param_name),
-                    min_value=int(min_value) if min_value is not None else 1,
-                    max_value=int(max_value) if max_value is not None else 100,
-                    value=int(default_value),
-                    step=int(step) if step else 1,
+                    value=bool(default_value),
                     help=help_text
                 )
                 
-        else:
-            # Numeric input (integer or float)
-            if isinstance(default_value, float):
-                step = step or 0.1
-                user_params[param_name] = st.sidebar.number_input(
+            elif param_type == 'select' and 'options' in param_config:
+                # Selection dropdown input
+                options = param_config['options']
+                default_index = 0
+                if default_value in options:
+                    default_index = options.index(default_value)
+                    
+                user_params[param_name] = st.sidebar.selectbox(
                     _format_parameter_label(param_name),
-                    min_value=float(min_value) if min_value is not None else None,
-                    max_value=float(max_value) if max_value is not None else None,
-                    value=float(default_value),
-                    step=step,
+                    options=options,
+                    index=default_index,
                     help=help_text
                 )
+                
+            elif param_type == 'slider' or (min_value is not None and max_value is not None):
+                # Slider input for bounded ranges
+                if isinstance(default_value, float):
+                    step = step or 0.01
+                    user_params[param_name] = st.sidebar.slider(
+                        _format_parameter_label(param_name),
+                        min_value=float(min_value) if min_value is not None else 0.0,
+                        max_value=float(max_value) if max_value is not None else 1.0,
+                        value=float(default_value),
+                        step=step,
+                        help=help_text
+                    )
+                else:
+                    user_params[param_name] = st.sidebar.slider(
+                        _format_parameter_label(param_name),
+                        min_value=int(min_value) if min_value is not None else 1,
+                        max_value=int(max_value) if max_value is not None else 100,
+                        value=int(default_value),
+                        step=int(step) if step else 1,
+                        help=help_text
+                    )
+                    
             else:
-                user_params[param_name] = st.sidebar.number_input(
-                    _format_parameter_label(param_name),
-                    min_value=int(min_value) if min_value is not None else None,
-                    max_value=int(max_value) if max_value is not None else None,
-                    value=int(default_value),
-                    step=int(step) if step else 1,
-                    help=help_text
-                )
+                # Numeric input (integer or float)
+                if isinstance(default_value, float):
+                    step = step or 0.01
+                    user_params[param_name] = st.sidebar.number_input(
+                        _format_parameter_label(param_name),
+                        min_value=float(min_value) if min_value is not None else None,
+                        max_value=float(max_value) if max_value is not None else None,
+                        value=float(default_value),
+                        step=step,
+                        help=help_text
+                    )
+                else:
+                    user_params[param_name] = st.sidebar.number_input(
+                        _format_parameter_label(param_name),
+                        min_value=int(min_value) if min_value is not None else None,
+                        max_value=int(max_value) if max_value is not None else None,
+                        value=int(default_value),
+                        step=int(step) if step else 1,
+                        help=help_text
+                    )
+    else:
+        # Use preset parameters directly without showing individual inputs
+        user_params = preset_params.copy()
+    
+    # Add preset information to the returned parameters
+    if presets:
+        user_params['_preset_selected'] = selected_preset or "Custom"
     
     return user_params
 
@@ -424,54 +495,107 @@ def _format_parameter_label(param_name: str) -> str:
 
 
 def render_data_configuration() -> Dict[str, Any]:
-    """Render data source and time range configuration controls in the sidebar.
+    """Render enhanced data configuration controls with advanced options.
     
-    This function provides users with controls to specify the data they want to analyze,
-    including ticker selection, date ranges, and data source options. It includes
-    validation and helpful defaults to ensure smooth user experience.
+    This function provides comprehensive data configuration options including
+    ticker selection, date ranges, benchmark comparison, and data sampling options
+    with enhanced validation and user guidance.
     
-    DATA CONFIGURATION OPTIONS:
-    ==========================
-    - Ticker Symbol: Stock symbol input with validation
-    - Date Range: Start and end date selection for backtesting
-    - Data Source: Selection of data provider (if multiple sources available)
-    - Data Frequency: Time interval selection (daily, hourly, etc.)
+    ENHANCED FEATURES:
+    =================
+    - Smart ticker symbol input with suggestions
+    - Benchmark selection for comparison analysis
+    - Date range presets (1Y, 2Y, 5Y) for quick selection
+    - Data sampling options for performance optimization
+    - Real-time validation with helpful feedback
     
-    VALIDATION FEATURES:
-    ===================
-    - Ticker symbol format validation
-    - Date range logical validation (start < end)
-    - Maximum date range limits for performance
-    - Data availability checking and warnings
+    ADVANCED OPTIONS:
+    ================
+    - Multiple benchmark indices (SPY, QQQ, IWM, etc.)
+    - Custom date range with validation
+    - Data quality settings and caching options
+    - Performance optimization controls
     
     Returns:
-        Dict[str, Any]: Data configuration parameters including:
+        Dict[str, Any]: Comprehensive data configuration including:
                        - ticker: Selected stock symbol
                        - start_date: Analysis start date
                        - end_date: Analysis end date
-                       - data_source: Selected data provider
-                       - frequency: Data time frequency
+                       - benchmark: Selected benchmark for comparison
+                       - sampling: Data sampling options
+                       - valid: Configuration validation status
     """
     st.sidebar.header("📈 Data Configuration")
     
-    # Ticker symbol input
+    # Enhanced ticker symbol input with suggestions
     ticker = st.sidebar.text_input(
         "🎯 Ticker Symbol",
         value="AAPL",
-        help="Enter a valid stock ticker symbol (e.g., AAPL, MSFT, GOOGL)"
+        help="💡 Popular symbols: AAPL, MSFT, GOOGL, AMZN, TSLA, SPY, QQQ"
     ).upper().strip()
     
-    # Validate ticker format
+    # Real-time ticker validation with helpful feedback
     if ticker and not _is_valid_ticker(ticker):
-        st.sidebar.warning("⚠️ Please enter a valid ticker symbol")
+        st.sidebar.warning("⚠️ Please enter a valid ticker symbol (3-5 characters, letters only)")
+        st.sidebar.info("Examples: AAPL, MSFT, GOOGL")
+    elif ticker:
+        st.sidebar.success(f"✅ {ticker} - Ready for analysis")
     
-    # Date range selection
-    st.sidebar.subheader("📅 Date Range")
+    # Enhanced benchmark selection
+    st.sidebar.subheader("📊 Benchmark Comparison")
     
-    # Default to last 2 years of data
-    default_start = datetime.now() - timedelta(days=730)
+    benchmark_options = {
+        "SPY": "S&P 500 ETF - Large Cap US Stocks",
+        "QQQ": "NASDAQ-100 ETF - Tech Heavy Index", 
+        "IWM": "Russell 2000 ETF - Small Cap US Stocks",
+        "VTI": "Total Stock Market ETF - Broad US Market",
+        "EFA": "EAFE ETF - International Developed Markets",
+        "VWO": "Emerging Markets ETF - EM Stocks",
+        "AGG": "Aggregate Bond ETF - US Bond Market",
+        "GLD": "Gold ETF - Precious Metals",
+        "None": "No Benchmark Comparison"
+    }
+    
+    selected_benchmark = st.sidebar.selectbox(
+        "Select Benchmark",
+        options=list(benchmark_options.keys()),
+        index=0,  # Default to SPY
+        format_func=lambda x: benchmark_options[x],
+        help="Choose a benchmark index to compare your strategy performance against"
+    )
+    
+    # Date range selection with presets
+    st.sidebar.subheader("📅 Analysis Period")
+    
+    # Quick date range presets
+    col1, col2, col3 = st.sidebar.columns(3)
+    
+    with col1:
+        if st.button("1Y", help="Last 1 year", use_container_width=True):
+            st.session_state.date_preset = "1Y"
+    with col2:
+        if st.button("2Y", help="Last 2 years", use_container_width=True):
+            st.session_state.date_preset = "2Y"
+    with col3:
+        if st.button("5Y", help="Last 5 years", use_container_width=True):
+            st.session_state.date_preset = "5Y"
+    
+    # Default dates based on preset or manual selection
+    if hasattr(st.session_state, 'date_preset'):
+        if st.session_state.date_preset == "1Y":
+            default_start = datetime.now() - timedelta(days=365)
+        elif st.session_state.date_preset == "2Y":
+            default_start = datetime.now() - timedelta(days=730)
+        elif st.session_state.date_preset == "5Y":
+            default_start = datetime.now() - timedelta(days=1825)
+        else:
+            default_start = datetime.now() - timedelta(days=730)
+    else:
+        default_start = datetime.now() - timedelta(days=730)
+    
     default_end = datetime.now()
     
+    # Custom date range input
     col1, col2 = st.sidebar.columns(2)
     
     with col1:
@@ -479,7 +603,7 @@ def render_data_configuration() -> Dict[str, Any]:
             "Start Date",
             value=default_start,
             max_value=datetime.now(),
-            help="Beginning of analysis period"
+            help="📅 Beginning of backtest period. Longer periods provide more data but may take longer to process."
         )
     
     with col2:
@@ -487,38 +611,71 @@ def render_data_configuration() -> Dict[str, Any]:
             "End Date", 
             value=default_end,
             max_value=datetime.now(),
-            help="End of analysis period"
+            help="📅 End of backtest period. Use recent date to include latest market conditions."
         )
     
-    # Validate date range
+    # Enhanced date validation with detailed feedback
     if start_date >= end_date:
         st.sidebar.error("❌ Start date must be before end date")
+        date_valid = False
+    elif start_date < datetime(1990, 1, 1).date():
+        st.sidebar.warning("⚠️ Very old start dates may have limited data availability")
+        date_valid = True
+    else:
+        date_valid = True
     
-    # Calculate and display analysis period
+    # Calculate and display analysis period with insights
     if start_date < end_date:
         period_days = (end_date - start_date).days
-        st.sidebar.info(f"📊 Analysis period: {period_days} days")
+        period_years = period_days / 365.25
         
-        if period_days > 1825:  # 5 years
-            st.sidebar.warning("⚠️ Long analysis periods may take more time to process")
+        if period_days < 30:
+            st.sidebar.warning("⚠️ Short analysis period (< 1 month) may not provide reliable results")
+        elif period_days < 252:  # Less than 1 trading year
+            st.sidebar.info(f"📊 Analysis period: {period_days} days ({period_years:.1f} years)")
+        elif period_days > 1825:  # More than 5 years
+            st.sidebar.success(f"📊 Analysis period: {period_days} days ({period_years:.1f} years) - Excellent for robust analysis")
+        else:
+            st.sidebar.success(f"📊 Analysis period: {period_days} days ({period_years:.1f} years) - Good for analysis")
     
-    # Additional data options
-    st.sidebar.subheader("⚙️ Data Options")
+    # Advanced data options
+    st.sidebar.subheader("⚙️ Advanced Options")
     
-    # Benchmark selection
-    benchmark = st.sidebar.selectbox(
-        "📊 Benchmark",
-        options=["SPY", "QQQ", "IWM", "DIA", "VTI", "None"],
-        index=0,
-        help="Select a benchmark for performance comparison"
-    )
+    # Data sampling for performance optimization
+    with st.sidebar.expander("🔧 Performance Settings", expanded=False):
+        data_sampling = st.selectbox(
+            "Data Sampling",
+            options=["Daily", "Weekly", "Monthly"],
+            index=0,
+            help="📈 Daily: Most accurate but slower. Weekly/Monthly: Faster but less precise."
+        )
+        
+        cache_data = st.checkbox(
+            "Enable Data Caching",
+            value=True,
+            help="💾 Cache downloaded data to improve performance on repeated analysis"
+        )
+        
+        include_volume = st.checkbox(
+            "Include Volume Data",
+            value=True,
+            help="📊 Include trading volume in analysis (some strategies use volume signals)"
+        )
+    
+    # Comprehensive validation
+    ticker_valid = ticker and _is_valid_ticker(ticker)
+    config_valid = ticker_valid and date_valid
     
     return {
         'ticker': ticker,
         'start_date': start_date,
         'end_date': end_date,
-        'benchmark': benchmark if benchmark != "None" else None,
-        'valid': ticker and _is_valid_ticker(ticker) and start_date < end_date
+        'benchmark': selected_benchmark if selected_benchmark != "None" else None,
+        'data_sampling': data_sampling,
+        'cache_enabled': cache_data,
+        'include_volume': include_volume,
+        'period_days': (end_date - start_date).days if date_valid else 0,
+        'valid': config_valid
     }
 
 
@@ -539,66 +696,187 @@ def _is_valid_ticker(ticker: str) -> bool:
 
 
 def render_analysis_options() -> Dict[str, Any]:
-    """Render analysis and visualization option controls in the sidebar.
+    """Render enhanced analysis and visualization options with detailed controls.
     
-    This function provides toggles and settings for various analysis features,
-    allowing users to customize what metrics are calculated and how results
-    are displayed.
+    This function provides comprehensive analysis customization options with
+    detailed tooltips, performance considerations, and professional settings
+    for institutional-grade analysis.
     
-    ANALYSIS OPTIONS:
-    ================
-    - Performance metrics calculation toggles
-    - Risk analysis options and settings
-    - Visualization preferences and chart types
-    - Report generation and export options
+    ENHANCED ANALYSIS OPTIONS:
+    =========================
+    - Performance metrics with complexity levels
+    - Advanced risk analysis with confidence settings
+    - Professional visualization customization
+    - AI-powered insights and explanations
+    - Export and reporting preferences
     
     Returns:
-        Dict[str, Any]: Analysis configuration options selected by user
+        Dict[str, Any]: Comprehensive analysis configuration with professional options
     """
     st.sidebar.header("📊 Analysis Options")
     
-    # Performance analysis options
-    show_drawdown = st.sidebar.checkbox(
-        "📉 Show Drawdown Analysis",
-        value=True,
-        help="Display maximum drawdown and underwater curves"
-    )
+    # Performance Analysis Section
+    with st.sidebar.expander("📈 Performance Analysis", expanded=True):
+        show_drawdown = st.checkbox(
+            "📉 Drawdown Analysis",
+            value=True,
+            help="📊 Display maximum drawdown curves and underwater periods. Essential for understanding risk periods."
+        )
+        
+        show_rolling_metrics = st.checkbox(
+            "🔄 Rolling Metrics", 
+            value=True,
+            help="📈 Calculate time-varying performance metrics (rolling Sharpe, volatility). Shows performance consistency over time."
+        )
+        
+        show_monthly_returns = st.checkbox(
+            "📅 Monthly Returns Heatmap",
+            value=True,
+            help="🗓️ Visualize monthly performance patterns and seasonality effects in strategy returns."
+        )
+        
+        performance_confidence = st.slider(
+            "Confidence Level",
+            min_value=90,
+            max_value=99,
+            value=95,
+            step=1,
+            help="📊 Statistical confidence level for performance intervals and risk metrics (higher = more conservative)"
+        )
     
-    show_rolling_metrics = st.sidebar.checkbox(
-        "📈 Rolling Performance Metrics", 
-        value=True,
-        help="Calculate rolling Sharpe ratio and other metrics"
-    )
+    # Risk Analysis Section
+    with st.sidebar.expander("⚠️ Risk Analysis", expanded=True):
+        calculate_var = st.checkbox(
+            "📊 Value at Risk (VaR)",
+            value=True,
+            help="⚠️ Calculate potential losses at specified confidence levels. Important for risk management."
+        )
+        
+        calculate_cvar = st.checkbox(
+            "📈 Conditional VaR",
+            value=False,
+            help="📊 Calculate expected loss beyond VaR threshold. Advanced risk metric for tail risk assessment."
+        )
+        
+        stress_testing = st.checkbox(
+            "🔥 Stress Testing",
+            value=False,
+            help="🧪 Test strategy performance under extreme market conditions (may increase processing time)."
+        )
+        
+        correlation_analysis = st.checkbox(
+            "🔗 Correlation Analysis",
+            value=True,
+            help="📊 Analyze correlation with market factors and other assets for diversification insights."
+        )
     
-    # Risk analysis options
-    calculate_var = st.sidebar.checkbox(
-        "⚠️ Value at Risk (VaR)",
-        value=False,
-        help="Calculate Value at Risk metrics (may increase processing time)"
-    )
+    # Visualization and UI Section
+    with st.sidebar.expander("🎨 Visualization", expanded=True):
+        chart_style = st.radio(
+            "Chart Theme",
+            options=["Professional", "Modern", "Classic"],
+            index=0,
+            help="🎨 Professional: Clean institutional style. Modern: Colorful and engaging. Classic: Traditional financial charts."
+        )
+        
+        chart_resolution = st.selectbox(
+            "Chart Quality",
+            options=["Standard", "High", "Ultra"],
+            index=1,
+            help="📊 Higher resolution provides better quality but may load slower. Ultra recommended for presentations."
+        )
+        
+        show_signals = st.checkbox(
+            "🎯 Trading Signals",
+            value=True,
+            help="📍 Display buy/sell signal markers on price charts with entry/exit points."
+        )
+        
+        show_volume = st.checkbox(
+            "📊 Volume Bars",
+            value=True,
+            help="📈 Include trading volume information in price charts for better market context."
+        )
+        
+        interactive_charts = st.checkbox(
+            "🖱️ Interactive Charts",
+            value=True,
+            help="🔍 Enable zoom, pan, and hover features on charts for detailed exploration."
+        )
     
-    # Visualization options
-    st.sidebar.subheader("🎨 Visualization")
+    # AI and Insights Section
+    with st.sidebar.expander("🤖 AI Features", expanded=False):
+        enable_ai_insights = st.checkbox(
+            "💡 AI Strategy Insights",
+            value=False,
+            help="🤖 Generate AI-powered explanations and insights about strategy performance (requires OpenAI API key)."
+        )
+        
+        ai_detail_level = st.selectbox(
+            "AI Detail Level",
+            options=["Summary", "Detailed", "Comprehensive"],
+            index=1,
+            help="📝 Summary: Key points only. Detailed: Analysis with explanations. Comprehensive: Full professional report.",
+            disabled=not enable_ai_insights
+        )
+        
+        trade_explanations = st.checkbox(
+            "📝 Trade Explanations",
+            value=False,
+            help="💬 Generate AI explanations for individual trading decisions and market context.",
+            disabled=not enable_ai_insights
+        )
     
-    chart_style = st.sidebar.radio(
-        "Chart Style",
-        options=["Modern", "Classic", "Minimal"],
-        index=0,
-        help="Select the visual style for charts and graphs"
-    )
-    
-    show_signals = st.sidebar.checkbox(
-        "🎯 Show Trading Signals",
-        value=True,
-        help="Display buy/sell signals on price charts"
-    )
+    # Export and Reporting Section
+    with st.sidebar.expander("📄 Export Options", expanded=False):
+        include_raw_data = st.checkbox(
+            "📊 Include Raw Data",
+            value=True,
+            help="💾 Include raw price and signal data in exports for further analysis."
+        )
+        
+        export_format = st.selectbox(
+            "Export Format",
+            options=["CSV", "Excel", "PDF Report"],
+            index=0,
+            help="📋 CSV: Data only. Excel: Formatted data. PDF: Complete professional report with charts."
+        )
+        
+        auto_save_results = st.checkbox(
+            "💾 Auto-Save Results",
+            value=False,
+            help="🔄 Automatically save analysis results to outputs directory with timestamp."
+        )
     
     return {
+        # Performance options
         'show_drawdown': show_drawdown,
         'show_rolling_metrics': show_rolling_metrics,
+        'show_monthly_returns': show_monthly_returns,
+        'performance_confidence': performance_confidence / 100,
+        
+        # Risk options
         'calculate_var': calculate_var,
+        'calculate_cvar': calculate_cvar,
+        'stress_testing': stress_testing,
+        'correlation_analysis': correlation_analysis,
+        
+        # Visualization options
         'chart_style': chart_style.lower(),
-        'show_signals': show_signals
+        'chart_resolution': chart_resolution.lower(),
+        'show_signals': show_signals,
+        'show_volume': show_volume,
+        'interactive_charts': interactive_charts,
+        
+        # AI options
+        'enable_ai_insights': enable_ai_insights,
+        'ai_detail_level': ai_detail_level.lower(),
+        'trade_explanations': trade_explanations,
+        
+        # Export options
+        'include_raw_data': include_raw_data,
+        'export_format': export_format.lower(),
+        'auto_save_results': auto_save_results
     }
 
 

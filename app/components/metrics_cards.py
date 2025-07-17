@@ -96,7 +96,7 @@ METRICS_STYLING = {
 
 
 def display_key_metrics(metrics: Dict[str, Any]) -> None:
-    """Display essential performance metrics in a prominent card layout.
+    """Display essential performance metrics with enhanced formatting and color coding.
     
     This function creates a visually appealing overview of the most critical
     performance metrics that users need to evaluate strategy effectiveness.
@@ -109,31 +109,16 @@ def display_key_metrics(metrics: Dict[str, Any]) -> None:
     - Sharpe Ratio: Risk-adjusted return efficiency measure
     - Maximum Drawdown: Worst-case loss scenario
     
-    VISUAL FEATURES:
-    ===============
-    - Large, prominent metric values for quick scanning
-    - Color coding based on performance (green=good, red=poor)
-    - Delta indicators showing improvement/deterioration
-    - Contextual information and benchmarks
-    - Responsive grid layout adapting to screen size
+    ENHANCED VISUAL FEATURES:
+    ========================
+    - Professional percentage formatting (15.23%)
+    - Color-coded metrics (green=positive, red=negative)
+    - Delta indicators with benchmark comparisons
+    - Contextual status indicators with proper thresholds
+    - Responsive grid layout with enhanced styling
     
     Args:
-        metrics (Dict[str, Any]): Performance metrics dictionary containing:
-                                 - total_return: Overall return as decimal (0.15 = 15%)
-                                 - annual_return: Annualized return as decimal
-                                 - sharpe_ratio: Risk-adjusted return measure
-                                 - max_drawdown: Maximum decline as decimal
-                                 - volatility: Annualized volatility (optional)
-                                 - benchmark_return: Benchmark performance (optional)
-    
-    Example:
-        metrics = {
-            'total_return': 0.234,      # 23.4% total return
-            'annual_return': 0.156,     # 15.6% annualized
-            'sharpe_ratio': 1.42,       # Good risk-adjusted performance
-            'max_drawdown': -0.087,     # 8.7% maximum decline
-        }
-        display_key_metrics(metrics)
+        metrics (Dict[str, Any]): Performance metrics dictionary
     """
     st.subheader("📊 Key Performance Metrics")
     
@@ -141,81 +126,145 @@ def display_key_metrics(metrics: Dict[str, Any]) -> None:
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        # Total Return with color coding
-        total_return = metrics.get('total_return', 0) * 100
-        return_color = "normal" if total_return >= 0 else "inverse"
+        # Total Return with enhanced color coding
+        total_return = metrics.get('total_return', 0)
+        total_return_pct = total_return * 100
         
-        st.metric(
-            label="📈 Total Return",
-            value=f"{total_return:.2f}%",
-            delta=None,
-            help="Cumulative return over the entire analysis period"
+        # Enhanced color coding based on performance with consistent formatting
+        metric_color = METRICS_STYLING['positive_color'] if total_return_pct > 0 else METRICS_STYLING['negative_color']
+        bg_color = METRICS_STYLING['background_good'] if total_return_pct > 0 else METRICS_STYLING['background_bad']
+        
+        st.markdown(
+            f"<div style='padding: 12px; background-color: {bg_color}; "
+            f"border-radius: 8px; margin-bottom: 10px; border-left: 4px solid {metric_color};'>"
+            f"<h4 style='color: {METRICS_STYLING['text_primary']}; margin: 0; font-size: 14px;'>📈 Total Return</h4>"
+            f"<h2 style='color: {metric_color}; margin: 5px 0; font-size: 28px; font-weight: 600;'>{total_return_pct:.2f}%</h2>"
+            f"</div>", unsafe_allow_html=True
         )
         
-        # Add visual context with colored background
-        if total_return > 10:
+        # Performance status with enhanced thresholds
+        if total_return_pct > 15:
+            st.success("🚀 Exceptional Performance")
+        elif total_return_pct > 8:
             st.success("🎯 Strong Performance")
-        elif total_return > 0:
+        elif total_return_pct > 0:
             st.info("📊 Positive Performance") 
+        elif total_return_pct > -5:
+            st.warning("⚠️ Slight Underperformance")
         else:
-            st.warning("⚠️ Negative Performance")
+            st.error("🔻 Poor Performance")
     
     with col2:
-        # Annualized Return with benchmark context
-        annual_return = metrics.get('annual_return', 0) * 100
-        benchmark_return = metrics.get('benchmark_return', 0) * 100
+        # Annualized Return with enhanced benchmark context
+        annual_return = metrics.get('annual_return', 0)
+        annual_return_pct = annual_return * 100
+        benchmark_return = metrics.get('benchmark_return', 0)
+        benchmark_return_pct = benchmark_return * 100 if benchmark_return else None
         
         # Calculate excess return if benchmark available
-        excess_return = annual_return - benchmark_return if benchmark_return else None
+        excess_return = annual_return_pct - benchmark_return_pct if benchmark_return_pct is not None else None
+        
+        # Enhanced metric display with delta coloring
+        delta_text = None
+        delta_color = None
+        if excess_return is not None:
+            delta_text = f"{excess_return:+.2f}% vs benchmark"
+            delta_color = "normal" if excess_return >= 0 else "inverse"
         
         st.metric(
             label="📅 Annual Return",
-            value=f"{annual_return:.2f}%",
-            delta=f"{excess_return:.2f}% vs benchmark" if excess_return is not None else None,
+            value=f"{annual_return_pct:.2f}%",
+            delta=delta_text,
+            delta_color=delta_color,
             help="Annualized return standardized to yearly performance"
         )
+        
+        # Benchmark comparison status
+        if excess_return is not None:
+            if excess_return > 3:
+                st.success(f"🏆 Outperforming by {excess_return:.1f}%")
+            elif excess_return > 0:
+                st.info(f"📈 Beating benchmark by {excess_return:.1f}%")
+            elif excess_return > -2:
+                st.warning(f"📊 Close to benchmark ({excess_return:+.1f}%)")
+            else:
+                st.error(f"📉 Underperforming by {abs(excess_return):.1f}%")
     
     with col3:
-        # Sharpe Ratio with interpretation
+        # Sharpe Ratio with enhanced interpretation and coloring
         sharpe_ratio = metrics.get('sharpe_ratio', 0)
         
-        st.metric(
-            label="⚖️ Sharpe Ratio",
-            value=f"{sharpe_ratio:.2f}",
-            delta=None,
-            help="Risk-adjusted return measure (higher is better)"
+        # Color-coded Sharpe ratio display
+        if sharpe_ratio > 1:
+            sharpe_color = METRICS_STYLING['positive_color']
+            bg_color = METRICS_STYLING['background_good']
+        elif sharpe_ratio > 0:
+            sharpe_color = METRICS_STYLING['neutral_color']
+            bg_color = METRICS_STYLING['background_neutral']
+        else:
+            sharpe_color = METRICS_STYLING['negative_color']
+            bg_color = METRICS_STYLING['background_bad']
+        
+        st.markdown(
+            f"<div style='padding: 12px; background-color: {bg_color}; "
+            f"border-radius: 8px; margin-bottom: 10px; border-left: 4px solid {sharpe_color};'>"
+            f"<h4 style='color: {METRICS_STYLING['text_primary']}; margin: 0; font-size: 14px;'>⚖️ Sharpe Ratio</h4>"
+            f"<h2 style='color: {sharpe_color}; margin: 5px 0; font-size: 28px; font-weight: 600;'>{sharpe_ratio:.2f}</h2>"
+            f"</div>", unsafe_allow_html=True
         )
         
-        # Provide Sharpe ratio interpretation
+        # Enhanced Sharpe ratio interpretation
         if sharpe_ratio > 2:
-            st.success("🌟 Excellent")
+            st.success("🌟 Excellent (>2.0)")
+        elif sharpe_ratio > 1.5:
+            st.success("⭐ Very Good (1.5-2.0)")
         elif sharpe_ratio > 1:
-            st.info("👍 Good")
+            st.info("👍 Good (1.0-1.5)")
+        elif sharpe_ratio > 0.5:
+            st.warning("📊 Acceptable (0.5-1.0)")
         elif sharpe_ratio > 0:
-            st.warning("📊 Acceptable")
+            st.warning("⚠️ Below Average (0-0.5)")
         else:
-            st.error("⚠️ Poor")
+            st.error("🔻 Poor (<0)")
     
     with col4:
-        # Maximum Drawdown with severity assessment
-        max_drawdown = metrics.get('max_drawdown', 0) * 100
+        # Maximum Drawdown with enhanced severity assessment
+        max_drawdown = metrics.get('max_drawdown', 0)
+        max_drawdown_pct = max_drawdown * 100
         
-        st.metric(
-            label="📉 Max Drawdown",
-            value=f"{max_drawdown:.2f}%",
-            delta=None,
-            help="Worst peak-to-trough decline during the period"
+        # Color-coded drawdown display (red for high drawdown)
+        drawdown_abs = abs(max_drawdown_pct)
+        if drawdown_abs < 5:
+            dd_color = METRICS_STYLING['positive_color']
+            bg_color = METRICS_STYLING['background_good']
+        elif drawdown_abs < 15:
+            dd_color = METRICS_STYLING['neutral_color']
+            bg_color = METRICS_STYLING['background_neutral']
+        else:
+            dd_color = METRICS_STYLING['negative_color']
+            bg_color = METRICS_STYLING['background_bad']
+        
+        st.markdown(
+            f"<div style='padding: 12px; background-color: {bg_color}; "
+            f"border-radius: 8px; margin-bottom: 10px; border-left: 4px solid {dd_color};'>"
+            f"<h4 style='color: {METRICS_STYLING['text_primary']}; margin: 0; font-size: 14px;'>📉 Max Drawdown</h4>"
+            f"<h2 style='color: {dd_color}; margin: 5px 0; font-size: 28px; font-weight: 600;'>{max_drawdown_pct:.2f}%</h2>"
+            f"</div>", unsafe_allow_html=True
         )
         
-        # Assess drawdown severity
-        if abs(max_drawdown) < 5:
-            st.success("🛡️ Low Risk")
-        elif abs(max_drawdown) < 15:
+        # Enhanced drawdown severity assessment
+        if drawdown_abs < 3:
+            st.success("🛡️ Excellent Risk Control")
+        elif drawdown_abs < 8:
+            st.success("✅ Low Risk")
+        elif drawdown_abs < 15:
             st.info("📊 Moderate Risk")
-        elif abs(max_drawdown) < 25:
+        elif drawdown_abs < 25:
             st.warning("⚠️ High Risk")
-        else:
+        elif drawdown_abs < 40:
             st.error("🚨 Very High Risk")
+        else:
+            st.error("💀 Extreme Risk")
 
 
 def display_detailed_metrics(metrics: Dict[str, Any]) -> None:
@@ -263,7 +312,7 @@ def display_detailed_metrics(metrics: Dict[str, Any]) -> None:
 
 
 def _display_return_metrics(metrics: Dict[str, Any]) -> None:
-    """Display return-focused performance metrics in organized layout."""
+    """Display return-focused performance metrics with enhanced formatting."""
     st.markdown("#### 📈 Return Analysis")
     
     # Create columns for different return measures
@@ -272,9 +321,15 @@ def _display_return_metrics(metrics: Dict[str, Any]) -> None:
     with col1:
         st.markdown("**Period Returns**")
         
-        # Total return
+        # Total return with color coding
         total_return = metrics.get('total_return', 0) * 100
-        st.metric("Total Return", f"{total_return:.2f}%")
+        delta_color = "normal" if total_return >= 0 else "inverse"
+        st.metric(
+            "Total Return", 
+            f"{total_return:.2f}%",
+            delta=f"{total_return:+.2f}%" if total_return != 0 else None,
+            delta_color=delta_color
+        )
         
         # Annualized return
         annual_return = metrics.get('annual_return', 0) * 100
@@ -292,33 +347,62 @@ def _display_return_metrics(metrics: Dict[str, Any]) -> None:
         benchmark_return = metrics.get('benchmark_return', 0) * 100
         st.metric("Benchmark Return", f"{benchmark_return:.2f}%")
         
-        # Alpha (excess return)
-        alpha = metrics.get('alpha', annual_return - benchmark_return)
-        color = "normal" if alpha >= 0 else "inverse"
-        st.metric("Alpha", f"{alpha:.2f}%")
+        # Alpha (excess return) with enhanced delta display
+        alpha = metrics.get('alpha', 0) * 100
+        if alpha == 0 and 'annual_return' in metrics and 'benchmark_return' in metrics:
+            alpha = (metrics.get('annual_return', 0) - metrics.get('benchmark_return', 0)) * 100
         
-        # Beta (systematic risk)
+        alpha_color = "normal" if alpha >= 0 else "inverse"
+        st.metric(
+            "Alpha (Excess Return)", 
+            f"{alpha:.2f}%",
+            delta=f"{alpha:+.2f}% vs benchmark" if alpha != 0 else None,
+            delta_color=alpha_color
+        )
+        
+        # Beta (systematic risk) with interpretation
         beta = metrics.get('beta', 1.0)
-        st.metric("Beta", f"{beta:.2f}")
+        beta_interpretation = "Higher" if beta > 1.1 else "Lower" if beta < 0.9 else "Similar"
+        st.metric(
+            "Beta (Market Sensitivity)", 
+            f"{beta:.2f}",
+            help=f"{beta_interpretation} volatility than market"
+        )
     
     with col3:
         st.markdown("**Return Statistics**")
         
-        # Best month/period
+        # Best month/period with color coding
         best_period = metrics.get('best_month', 0) * 100
-        st.metric("Best Month", f"{best_period:.2f}%")
+        st.metric(
+            "Best Month", 
+            f"{best_period:.2f}%",
+            delta=f"+{best_period:.2f}%" if best_period > 0 else None,
+            delta_color="normal"
+        )
         
-        # Worst month/period
+        # Worst month/period with color coding
         worst_period = metrics.get('worst_month', 0) * 100
-        st.metric("Worst Month", f"{worst_period:.2f}%")
+        st.metric(
+            "Worst Month", 
+            f"{worst_period:.2f}%",
+            delta=f"{worst_period:+.2f}%" if worst_period != 0 else None,
+            delta_color="inverse"
+        )
         
         # Win rate (percentage of positive periods)
         win_rate = metrics.get('win_rate_periods', 0) * 100
-        st.metric("Positive Periods", f"{win_rate:.1f}%")
+        win_color = "normal" if win_rate >= 50 else "inverse"
+        st.metric(
+            "Positive Periods", 
+            f"{win_rate:.1f}%",
+            delta=f"{win_rate-50:+.1f}% vs 50%" if win_rate != 0 else None,
+            delta_color=win_color
+        )
 
 
 def _display_risk_metrics(metrics: Dict[str, Any]) -> None:
-    """Display risk-focused metrics including volatility and drawdown analysis."""
+    """Display risk-focused metrics including volatility and drawdown analysis with benchmark comparisons."""
     st.markdown("#### ⚠️ Risk Assessment")
     
     col1, col2, col3 = st.columns(3)
@@ -326,9 +410,21 @@ def _display_risk_metrics(metrics: Dict[str, Any]) -> None:
     with col1:
         st.markdown("**Volatility Measures**")
         
-        # Annual volatility
+        # Annual volatility with benchmark comparison
         volatility = metrics.get('volatility', 0) * 100
-        st.metric("Annual Volatility", f"{volatility:.2f}%")
+        benchmark_volatility = metrics.get('benchmark_volatility', 0) * 100
+        
+        if benchmark_volatility > 0:
+            vol_diff = volatility - benchmark_volatility
+            vol_delta_color = "inverse" if vol_diff > 0 else "normal"  # Higher vol is worse
+            st.metric(
+                "Annual Volatility", 
+                f"{volatility:.2f}%",
+                delta=f"{vol_diff:+.2f}% vs benchmark",
+                delta_color=vol_delta_color
+            )
+        else:
+            st.metric("Annual Volatility", f"{volatility:.2f}%")
         
         # Downside deviation
         downside_deviation = metrics.get('downside_deviation', 0) * 100
@@ -342,9 +438,22 @@ def _display_risk_metrics(metrics: Dict[str, Any]) -> None:
     with col2:
         st.markdown("**Drawdown Analysis**")
         
-        # Maximum drawdown
+        # Maximum drawdown with benchmark comparison
         max_drawdown = metrics.get('max_drawdown', 0) * 100
-        st.metric("Maximum Drawdown", f"{max_drawdown:.2f}%")
+        benchmark_max_drawdown = metrics.get('benchmark_max_drawdown', 0) * 100
+        
+        if benchmark_max_drawdown != 0:
+            dd_improvement = benchmark_max_drawdown - max_drawdown  # Positive if strategy is better
+            dd_delta_color = "normal" if dd_improvement > 0 else "inverse"
+            st.metric(
+                "Maximum Drawdown", 
+                f"{max_drawdown:.2f}%",
+                delta=f"{dd_improvement:+.2f}% vs benchmark",
+                delta_color=dd_delta_color,
+                help="Positive delta means lower drawdown (better)"
+            )
+        else:
+            st.metric("Maximum Drawdown", f"{max_drawdown:.2f}%")
         
         # Average drawdown
         avg_drawdown = metrics.get('avg_drawdown', 0) * 100
@@ -384,9 +493,21 @@ def _display_risk_adjusted_metrics(metrics: Dict[str, Any]) -> None:
     with col1:
         st.markdown("**Classic Ratios**")
         
-        # Sharpe ratio
+        # Sharpe ratio with benchmark comparison
         sharpe_ratio = metrics.get('sharpe_ratio', 0)
-        st.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
+        benchmark_sharpe = metrics.get('benchmark_sharpe_ratio', 0)
+        
+        if benchmark_sharpe != 0:
+            sharpe_diff = sharpe_ratio - benchmark_sharpe
+            sharpe_delta_color = "normal" if sharpe_diff > 0 else "inverse"
+            st.metric(
+                "Sharpe Ratio", 
+                f"{sharpe_ratio:.2f}",
+                delta=f"{sharpe_diff:+.2f} vs benchmark",
+                delta_color=sharpe_delta_color
+            )
+        else:
+            st.metric("Sharpe Ratio", f"{sharpe_ratio:.2f}")
         
         # Sortino ratio
         sortino_ratio = metrics.get('sortino_ratio', 0)

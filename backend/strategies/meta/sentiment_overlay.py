@@ -92,7 +92,7 @@ Supports real APIs (newsapi, finnhub) and mock sentiment for now.
 import pandas as pd
 import numpy as np
 from typing import Dict, Any, Optional, List
-from .base import BaseStrategy
+from ..base import BaseStrategy
 import logging
 import requests
 import time
@@ -642,6 +642,9 @@ class SentimentOverlayStrategy(BaseStrategy):
     - Custom sentiment providers through standardized interface
     """
     
+    # Strategy metadata for auto-registration
+    strategy_category = 'meta'
+    
     def __init__(self, 
                  base_strategy: BaseStrategy,
                  sentiment_provider: SentimentProvider,
@@ -890,6 +893,9 @@ class SentimentMeanReversionStrategy(BaseStrategy):
     - CONFIRMATION: Optionally require price action to support contrarian view
     - TIMING: Use sentiment smoothing to avoid false signals from noise
     """
+    
+    # Strategy metadata for auto-registration
+    strategy_category = 'meta'
     
     def __init__(self, 
                  sentiment_provider: SentimentProvider,

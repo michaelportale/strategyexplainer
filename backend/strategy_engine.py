@@ -50,15 +50,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.config_manager import get_config_manager
 
 # Strategy implementation imports - all available strategy types
-from backend.strategies.base import BaseStrategy, StrategyComposer
-from backend.strategies.sma_ema_rsi import SmaEmaRsiStrategy, CrossoverStrategy, RsiStrategy
-from backend.strategies.vol_breakout import VolatilityBreakoutStrategy, ChannelBreakoutStrategy, VolumeBreakoutStrategy
-from backend.strategies.mean_reversion import (
-    BollingerBandMeanReversionStrategy, ZScoreMeanReversionStrategy, 
-    RSIMeanReversionStrategy, MeanReversionComboStrategy
-)
-from backend.strategies.regime_switch import RegimeGatedStrategy, RegimeSwitchStrategy, RegimeDetector
-from backend.strategies.sentiment_overlay import SentimentOverlayStrategy, SentimentMeanReversionStrategy, MockSentimentProvider
+from backend.strategies.base import BaseStrategy, StrategyComposer, StrategyRegistry
+# Import all strategy modules to trigger auto-registration
+from backend.strategies import momentum, breakout, mean_reversion, meta
 
 # Core infrastructure imports
 from backend.simulate import TradingSimulator
@@ -85,11 +79,14 @@ class StrategyEngine:
     - Jupyter notebooks for research
     
     Attributes:
-        STRATEGY_REGISTRY (Dict[str, type]): Mapping of strategy names to implementation classes
         config_manager: Configuration manager instance (if using new config system)
         config (Dict[str, Any]): Configuration dictionary
         data_loader (DataLoader): Data fetching and caching instance
         logger: Logging instance for operation tracking
+        
+    Note:
+        Strategy registry is now handled dynamically via StrategyRegistry singleton.
+        All strategies are automatically registered when their modules are imported.
     
     Example:
         >>> engine = StrategyEngine()
@@ -98,28 +95,8 @@ class StrategyEngine:
         >>> print(f"Strategy return: {result['metrics']['Total Return']:.2%}")
     """
     
-    # Strategy registry mapping string names to implementation classes
-    # This enables dynamic strategy instantiation from configuration files or user input
-    STRATEGY_REGISTRY = {
-        # Trend-following and momentum strategies
-        'sma_ema_rsi': SmaEmaRsiStrategy,        # SMA/EMA crossover with RSI filter
-        'crossover': CrossoverStrategy,           # Pure moving average crossover
-        'rsi': RsiStrategy,                      # RSI momentum strategy
-        
-        # Breakout strategies for capturing price movements
-        'volatility_breakout': VolatilityBreakoutStrategy,  # Volume-confirmed breakouts
-        'channel_breakout': ChannelBreakoutStrategy,        # Donchian channel breakouts
-        'volume_breakout': VolumeBreakoutStrategy,          # Volume spike breakouts
-        
-        # Mean reversion strategies for counter-trend trading
-        'bollinger_mean_reversion': BollingerBandMeanReversionStrategy,  # Bollinger band reversals
-        'zscore_mean_reversion': ZScoreMeanReversionStrategy,            # Z-score based reversals
-        'rsi_mean_reversion': RSIMeanReversionStrategy,                  # RSI divergence reversals
-        'mean_reversion_combo': MeanReversionComboStrategy,              # Multi-indicator consensus
-        
-        # Advanced sentiment-based strategies
-        'sentiment_mean_reversion': SentimentMeanReversionStrategy,      # Sentiment-filtered mean reversion
-    }
+    # Strategy registry is now handled dynamically via the StrategyRegistry singleton
+    # All strategies are automatically registered when their modules are imported
     
     def __init__(self, config_path: Optional[str] = None):
         """Initialize strategy engine with configuration management.
@@ -242,14 +219,14 @@ class StrategyEngine:
             return self._load_legacy_config(None)  # Recursive call for default config
     
     def create_strategy(self, strategy_name: str, parameters: Dict[str, Any] = None) -> BaseStrategy:
-        """Create a strategy instance from the registry.
+        """Create a strategy instance from the dynamic registry.
         
         This factory method handles the instantiation of strategy objects,
         including any special setup required for specific strategy types.
         It serves as the central point for strategy creation across the engine.
         
         Args:
-            strategy_name: Name of strategy to create (must be in STRATEGY_REGISTRY)
+            strategy_name: Name of strategy to create (must be in StrategyRegistry)
             parameters: Strategy-specific parameters to override defaults
             
         Returns:
@@ -267,16 +244,16 @@ class StrategyEngine:
             >>> print(strategy.name)
             'SMA/EMA with RSI Strategy'
         """
-        # Validate strategy name against registry
-        if strategy_name not in self.STRATEGY_REGISTRY:
-            available = list(self.STRATEGY_REGISTRY.keys())
-            raise ValueError(f"Unknown strategy '{strategy_name}'. Available: {available}")
+        # Get the dynamic registry instance
+        registry = StrategyRegistry.get_instance()
         
-        # Get strategy class from registry
-        strategy_class = self.STRATEGY_REGISTRY[strategy_name]
+        # Get strategy class from dynamic registry  
+        strategy_class = registry.get_strategy_class(strategy_name)
         
         # Handle special cases that require additional setup
         if strategy_name == 'sentiment_mean_reversion':
+            # Import here to avoid circular imports
+            from backend.strategies.meta import MockSentimentProvider
             # Sentiment strategies need a sentiment provider instance
             # Use mock provider for testing/demo purposes
             provider = MockSentimentProvider()
@@ -912,9 +889,13 @@ Examples:
         print("\n=== AVAILABLE STRATEGIES ===")
         print("Strategy Name                | Description")
         print("-" * 50)
-        for name in sorted(engine.STRATEGY_REGISTRY.keys()):
+        
+        # Get the dynamic registry instance
+        registry = StrategyRegistry.get_instance()
+        
+        for name in sorted(registry.list_strategies()):
             # Get brief description from strategy class if available
-            strategy_class = engine.STRATEGY_REGISTRY[name]
+            strategy_class = registry.get_strategy_class(name)
             description = getattr(strategy_class, '__doc__', 'No description').split('\n')[0]
             print(f"{name:<28} | {description}")
         return 0

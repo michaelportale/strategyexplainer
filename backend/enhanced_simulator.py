@@ -1,175 +1,13 @@
-"""
-Enhanced Trading Simulator: AI-Powered Trade Analysis and Explanation Engine
+"""Enhanced trading simulator with AI-powered trade analysis and explanation.
 
-This module provides an advanced trading simulation environment that extends the core
-backtesting capabilities with artificial intelligence-powered trade analysis and
-explanation generation. It represents the cutting edge of explainable AI in
-quantitative finance.
+Extends the base TradingSimulator with GPT-4 integration to provide human-readable
+explanations for trading decisions and comprehensive trade analysis.
 
-The enhanced simulator integrates GPT-4 language models to provide human-readable
-explanations for trading decisions, making algorithmic trading strategies more
-interpretable and accessible to both technical and non-technical stakeholders.
-
-Key Features:
-============
-
-1. **AI-Powered Trade Commentary**
-   - Real-time trade explanation generation using GPT-4
-   - Context-aware analysis of market conditions
-   - Professional-grade investment commentary
-   - Detailed reasoning for entry and exit decisions
-
-2. **Enhanced Backtesting Engine**
-   - All standard backtesting capabilities
-   - Extended trade logging with AI insights
-   - Performance attribution with explanations
-   - Risk management integration
-
-3. **Explainable AI Integration**
-   - Natural language processing for trade analysis
-   - Contextual understanding of market dynamics
-   - Educational insights for strategy development
-   - Automated report generation
-
-4. **Professional Trade Analysis**
-   - Sophisticated trade outcome analysis
-   - Market condition correlation
-   - Strategy performance attribution
-   - Risk-adjusted performance explanations
-
-Architecture:
-============
-
-The enhanced simulator extends the base TradingSimulator with AI capabilities:
-
-1. **Base Simulation Layer**
-   - Core backtesting functionality
-   - Position management
-   - Risk controls
-   - Performance metrics
-
-2. **AI Integration Layer**
-   - GPT service integration
-   - Trade context creation
-   - Explanation generation
-   - Error handling
-
-3. **Enhanced Analytics Layer**
-   - Trade outcome analysis
-   - Performance attribution
-   - Risk assessment
-   - Educational insights
-
-4. **Output Enhancement Layer**
-   - Enriched trade logs
-   - AI-generated explanations
-   - Professional commentary
-   - Interpretable results
-
-Usage Examples:
-===============
-
-Basic Usage:
-```python
-from backend.enhanced_simulator import GPTEnhancedSimulator
-
-# Create enhanced simulator
-simulator = GPTEnhancedSimulator(
-    initial_capital=10000,
-    enable_gpt=True,
-    strategy_name="SMA Crossover"
-)
-
-# Run simulation with AI explanations
-equity_curve, trades = simulator.simulate_strategy(price_data, signals, "AAPL")
-
-# Access AI explanations
-for idx, trade in trades.iterrows():
-    print(f"Trade {idx}: {trade['gpt_explanation']}")
-```
-
-Advanced Configuration:
-```python
-# Configure with risk management
-simulator = GPTEnhancedSimulator(
-    initial_capital=50000,
-    commission=0.001,
-    slippage=0.0005,
-    stop_loss_pct=0.02,
-    take_profit_pct=0.05,
-    max_drawdown_pct=0.15,
-    position_size_pct=0.8,
-    enable_gpt=True,
-    strategy_name="Advanced Momentum Strategy"
-)
-```
-
-Configuration Integration:
-```python
-# Load from config file
-simulator = create_gpt_enhanced_simulator(config, "MyStrategy")
-```
-
-Educational Value:
-=================
-
-This module demonstrates:
-
-1. **AI Integration in Finance**
-   - Natural language processing applications
-   - Explainable AI in trading systems
-   - Human-AI collaboration in investment decisions
-   - Automated analysis and reporting
-
-2. **Advanced Backtesting Techniques**
-   - Enhanced simulation frameworks
-   - Trade outcome analysis
-   - Performance attribution methods
-   - Risk-adjusted evaluation
-
-3. **Professional Trading Systems**
-   - Institutional-quality backtesting
-   - Comprehensive trade logging
-   - Multi-dimensional performance analysis
-   - Automated reporting systems
-
-4. **Software Engineering Practices**
-   - Extension of base classes
-   - Service integration patterns
-   - Error handling and logging
-   - Configuration management
-
-Integration Points:
-==================
-
-The enhanced simulator integrates with:
-- GPTService for AI-powered analysis
-- TradingSimulator base class
-- Configuration management system
-- Strategy engine framework
-- Risk management systems
-
-Performance Considerations:
-==========================
-
-- OpenAI API rate limiting
-- Token usage optimization
-- Caching of repeated analyses
-- Fallback mechanisms for API failures
-- Efficient trade context creation
-
-Dependencies:
-============
-
-- OpenAI GPT-4 API access
-- Base TradingSimulator class
-- GPTService integration
-- Configuration management
-- Standard backtesting data formats
-
-Author: Strategy Explainer Framework
-Version: 2.0
-License: Educational Use
+Classes:
+    GPTEnhancedSimulator: Enhanced simulator with AI trade commentary
+    
+Functions:
+    create_gpt_enhanced_simulator(): Factory function using config
 """
 
 import pandas as pd
@@ -190,43 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class GPTEnhancedSimulator(TradingSimulator):
-    """
-    Advanced trading simulator with AI-powered trade analysis and explanation.
-    
-    This class extends the base TradingSimulator with GPT-4 integration to provide
-    human-readable explanations for trading decisions and outcomes. It represents
-    the state-of-the-art in explainable AI for quantitative finance.
-    
-    The enhanced simulator maintains all the functionality of the base simulator
-    while adding sophisticated AI-powered analysis capabilities that make trading
-    strategies more interpretable and educational.
-    
-    Key Capabilities:
-    ================
-    
-    1. **Real-time Trade Analysis**
-       - AI-powered explanation generation for each trade
-       - Context-aware market condition analysis
-       - Professional investment commentary
-       - Educational insights for strategy development
-    
-    2. **Enhanced Trade Logging**
-       - Extended trade records with AI explanations
-       - Detailed reasoning for entry and exit decisions
-       - Performance attribution with natural language
-       - Risk assessment and market context
-    
-    3. **Explainable AI Integration**
-       - GPT-4 language model integration
-       - Contextual understanding of trading decisions
-       - Human-readable strategy explanations
-       - Automated report generation
-    
-    4. **Professional Analytics**
-       - Sophisticated trade outcome analysis
-       - Market condition correlation
-       - Strategy performance attribution
-       - Risk-adjusted performance explanations
+    """Trading simulator extended with GPT-4 powered trade analysis and explanations.
     
     Attributes:
         strategy_name (str): Name of the trading strategy being simulated
@@ -234,26 +36,6 @@ class GPTEnhancedSimulator(TradingSimulator):
         gpt_service (GPTService): AI service for generating explanations
         trade_explanations (list): Storage for AI-generated trade explanations
         current_symbol (str): Current trading symbol for context
-    
-    Example Usage:
-    =============
-    ```python
-    # Create enhanced simulator
-    simulator = GPTEnhancedSimulator(
-        initial_capital=10000,
-        enable_gpt=True,
-        strategy_name="SMA Crossover Strategy"
-    )
-    
-    # Run simulation with AI explanations
-    equity_curve, trades = simulator.simulate_strategy(
-        price_data, signals, "AAPL"
-    )
-    
-    # Access AI explanations
-    for idx, trade in trades.iterrows():
-        print(f"Trade Analysis: {trade['gpt_explanation']}")
-    ```
     """
     
     def __init__(self, 
@@ -267,45 +49,13 @@ class GPTEnhancedSimulator(TradingSimulator):
                  position_size_pct: float = 1.0,
                  enable_gpt: bool = True,
                  strategy_name: str = "Unknown Strategy"):
-        """
-        Initialize the enhanced trading simulator with AI capabilities.
-        
-        This constructor extends the base TradingSimulator with GPT-4 integration
-        and additional configuration options for AI-powered analysis. It maintains
-        backward compatibility while adding sophisticated explanation capabilities.
+        """Initialize enhanced trading simulator with GPT-4 trade analysis capabilities.
         
         Args:
-            initial_capital (float): Starting capital for the simulation
-            commission (float, optional): Transaction commission rate. Defaults to 0.0.
-            slippage (float, optional): Market slippage factor. Defaults to 0.0.
-            margin_requirement (float, optional): Margin requirement for positions. Defaults to 1.0.
-            stop_loss_pct (float, optional): Stop loss percentage. Defaults to None.
-            take_profit_pct (float, optional): Take profit percentage. Defaults to None.
-            max_drawdown_pct (float, optional): Maximum drawdown limit. Defaults to None.
-            position_size_pct (float, optional): Position sizing percentage. Defaults to 1.0.
-            enable_gpt (bool, optional): Enable GPT-4 analysis. Defaults to True.
-            strategy_name (str, optional): Name of the trading strategy. Defaults to "Unknown Strategy".
-        
-        Initialization Process:
-        ======================
-        1. **Base Simulator Setup**: Initialize parent TradingSimulator with core parameters
-        2. **AI Service Integration**: Configure GPT service for trade analysis
-        3. **Enhanced Logging**: Set up extended trade logging capabilities
-        4. **Configuration Validation**: Verify AI service availability and configuration
-        
-        Error Handling:
-        ==============
-        - Graceful degradation when GPT service is unavailable
-        - Fallback to standard simulation when API fails
-        - Comprehensive logging of initialization issues
-        - User-friendly error messages
-        
-        Performance Considerations:
-        ==========================
-        - Lazy initialization of GPT service
-        - Efficient trade context creation
-        - Optimized API usage patterns
-        - Memory-conscious explanation storage
+            initial_capital (float): Starting capital for simulation
+            enable_gpt (bool): Enable GPT-4 trade explanations (default: True)
+            strategy_name (str): Name of the trading strategy for context
+            **kwargs: Additional parameters passed to base TradingSimulator
         """
         # Initialize base simulator with all standard parameters
         super().__init__(

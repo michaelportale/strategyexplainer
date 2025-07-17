@@ -1,239 +1,19 @@
-"""
-Strategy Suite Demonstration Platform: Comprehensive Trading System Showcase
+"""Strategy suite demonstration platform.
 
-This module provides a complete demonstration platform for the modular trading strategy
-framework, showcasing the full capabilities of the weaponized strategy laboratory.
-It serves as both an educational tool and a practical guide for strategy development
-and deployment.
+Comprehensive demonstration of the modular trading strategy framework, including
+individual strategies, strategy combinations, regime-gated systems, and sentiment
+overlays.
 
-The demonstration platform is designed for quantitative researchers, algorithmic traders,
-and financial professionals who want to understand the complete spectrum of strategy
-development possibilities within the framework.
+Main Functions:
+    demo_individual_strategies(): Test core strategy implementations
+    demo_strategy_combinations(): Test voting-based strategy ensembles  
+    demo_regime_gated_strategies(): Test adaptive regime-aware systems
+    demo_sentiment_overlay(): Test sentiment-filtered strategies
+    demo_advanced_combinations(): Test hierarchical strategy architectures
+    demo_batch_optimization(): Test systematic parameter optimization
 
-Key Features:
-============
-
-1. **Individual Strategy Demonstrations**
-   - Core strategy implementations (SMA/EMA+RSI, Volatility Breakout, Mean Reversion)
-   - Performance metrics and trade analysis
-   - Parameter sensitivity demonstrations
-   - Educational explanations of strategy logic
-
-2. **Strategy Combination Framework**
-   - Majority voting systems
-   - Unanimous consensus mechanisms
-   - Any-signal activation patterns
-   - Ensemble learning applications
-
-3. **Regime-Gated Strategy Systems**
-   - Market regime detection algorithms
-   - Adaptive strategy activation/deactivation
-   - Trend-following vs mean-reverting regime switches
-   - Volatility-based regime classification
-
-4. **Sentiment-Filtered Strategy Engine**
-   - Sentiment overlay integration
-   - Social media sentiment analysis
-   - News sentiment filtering
-   - Behavioral finance applications
-
-5. **Advanced Strategy Combinations**
-   - Multi-dimensional strategy stacking
-   - Hierarchical strategy architectures
-   - Risk-adjusted ensemble methods
-   - Performance attribution analysis
-
-6. **Batch Processing Demonstrations**
-   - Hyperparameter optimization workflows
-   - Cross-validation methodologies
-   - Performance comparison frameworks
-   - Statistical significance testing
-
-Architecture:
-============
-
-The demonstration platform follows a modular architecture:
-
-1. **Core Engine Layer**
-   - StrategyEngine integration
-   - Unified configuration management
-   - Performance metrics calculation
-   - Risk management systems
-
-2. **Strategy Implementation Layer**
-   - Individual strategy classes
-   - Combination strategy wrappers
-   - Regime detection algorithms
-   - Sentiment analysis providers
-
-3. **Demonstration Framework**
-   - Educational workflow orchestration
-   - Performance comparison systems
-   - Visualization and reporting
-   - Error handling and logging
-
-4. **Integration Layer**
-   - Data source connections
-   - External API integrations
-   - Configuration management
-   - Output generation systems
-
-Educational Value:
-=================
-
-This module demonstrates:
-
-1. **Quantitative Strategy Development**
-   - Technical analysis implementation
-   - Signal generation techniques
-   - Risk management principles
-   - Performance evaluation methods
-
-2. **Ensemble Learning in Finance**
-   - Strategy combination methodologies
-   - Voting mechanisms
-   - Consensus building algorithms
-   - Diversification benefits
-
-3. **Adaptive Trading Systems**
-   - Regime detection techniques
-   - Dynamic strategy switching
-   - Market condition awareness
-   - Behavioral finance integration
-
-4. **Professional Development Practices**
-   - Modular system design
-   - Comprehensive testing frameworks
-   - Documentation standards
-   - Error handling patterns
-
-5. **Research Methodology**
-   - Hypothesis testing
-   - Statistical validation
-   - Performance attribution
-   - Backtesting best practices
-
-Usage Examples:
-===============
-
-Complete Demonstration:
-```python
-# Run all demonstrations
-python demo_strategy_suite.py
-
-# Individual components
-from demo_strategy_suite import (
-    demo_individual_strategies,
-    demo_strategy_combinations,
-    demo_regime_gated_strategies
-)
-
-# Execute specific demonstrations
-demo_individual_strategies()
-demo_strategy_combinations()
-```
-
-Programmatic Access:
-```python
-from demo_strategy_suite import *
-from backend.strategy_engine import StrategyEngine
-
-# Create engine
-engine = StrategyEngine()
-
-# Test individual strategy
-strategy = engine.create_strategy('sma_ema_rsi', {'fast_period': 10})
-result = engine.run_single_strategy(strategy, "AAPL", "2022-01-01", "2024-01-01")
-
-# Test combinations
-strategies = [strategy1, strategy2, strategy3]
-combo_result = engine.run_strategy_combo(strategies, "AAPL", "majority")
-```
-
-Strategy Categories:
-===================
-
-1. **Trend Following Strategies**
-   - SMA/EMA crossover systems
-   - Momentum-based signals
-   - Trend strength indicators
-   - Breakout detection algorithms
-
-2. **Mean Reversion Strategies**
-   - Bollinger Band reversals
-   - RSI oversold/overbought signals
-   - Statistical arbitrage patterns
-   - Price deviation analysis
-
-3. **Volatility-Based Strategies**
-   - ATR breakout systems
-   - Volatility expansion patterns
-   - Risk-adjusted position sizing
-   - Volatility regime detection
-
-4. **Sentiment-Driven Strategies**
-   - Social media sentiment analysis
-   - News sentiment integration
-   - Behavioral finance signals
-   - Contrarian sentiment strategies
-
-5. **Hybrid Strategy Systems**
-   - Multi-signal combinations
-   - Regime-aware adaptations
-   - Risk-adjusted ensembles
-   - Dynamic weight allocation
-
-Performance Metrics:
-===================
-
-The demonstration platform tracks comprehensive performance metrics:
-
-1. **Return Metrics**
-   - Total return
-   - Annualized return
-   - Risk-adjusted returns
-   - Benchmark comparisons
-
-2. **Risk Metrics**
-   - Maximum drawdown
-   - Volatility measures
-   - Sharpe ratio
-   - Sortino ratio
-
-3. **Trade Statistics**
-   - Win rate
-   - Profit factor
-   - Average trade duration
-   - Trade frequency
-
-4. **Advanced Metrics**
-   - Calmar ratio
-   - Kelly criterion
-   - Recovery factor
-   - Tail risk measures
-
-Integration Points:
-==================
-
-The system integrates with:
-- backend/strategy_engine.py (core engine)
-- backend/strategies/ (strategy implementations)
-- config/config.yaml (configuration system)
-- Data providers (market data)
-- Visualization systems (charts and reports)
-
-Performance Considerations:
-==========================
-
-- Optimized backtesting engine
-- Efficient data processing
-- Memory-conscious operations
-- Scalable architecture
-- Parallel processing capability
-
-Author: Strategy Explainer Framework
-Version: 2.0
-License: Educational Use
+Usage:
+    python demo_strategy_suite.py  # Run all demonstrations
 """
 
 #!/usr/bin/env python3
@@ -448,55 +228,10 @@ def demo_strategy_combinations():
 
 
 def demo_regime_gated_strategies():
-    """
-    Demonstrate regime-gated strategy systems and adaptive trading.
+    """Demonstrate regime-gated strategy systems with adaptive market condition filtering.
     
-    This function showcases advanced regime-aware trading systems that adapt
-    their behavior based on market conditions. It demonstrates how strategies
-    can be dynamically activated or deactivated based on regime detection.
-    
-    The demonstration covers:
-    - Market regime detection algorithms
-    - Adaptive strategy activation/deactivation
-    - Performance in different market conditions
-    - Regime-based risk management
-    
-    Regime Detection Methods:
-    ========================
-    1. **SMA Slope Detection**: Trend-based regime identification
-       - Uses moving average slope to detect trend direction
-       - Activates trend-following strategies in trending markets
-       - Deactivates in sideways/choppy conditions
-       - Parameters: SMA period, slope threshold
-    
-    2. **ATR Volatility Regime**: Volatility-based regime classification
-       - Uses Average True Range for volatility measurement
-       - Categorizes markets as low/medium/high volatility
-       - Adapts strategy behavior to volatility conditions
-       - Parameters: ATR period, volatility percentiles
-    
-    Adaptive Strategy Behavior:
-    ==========================
-    - **Trending Regimes**: Activate trend-following strategies
-    - **Volatile Regimes**: Activate breakout and momentum strategies
-    - **Quiet Regimes**: Activate mean reversion strategies
-    - **Uncertain Regimes**: Reduce position sizes or stay flat
-    
-    Performance Benefits:
-    ====================
-    - Improved risk-adjusted returns
-    - Reduced drawdowns in adverse conditions
-    - Better adaptation to market cycles
-    - Enhanced portfolio stability
-    
-    Educational Value:
-    =================
-    This demonstration teaches:
-    - Market regime detection techniques
-    - Adaptive trading system design
-    - Conditional strategy activation
-    - Risk management through regime awareness
-    - Dynamic portfolio allocation methods
+    Tests SMA slope and ATR volatility regime detection methods applied to base strategies.
+    Regime filters activate/deactivate strategies based on market conditions.
     """
     print("\n" + "="*60)
     print("🌐 DEMO 3: REGIME-GATED STRATEGIES")
@@ -861,48 +596,10 @@ def demo_advanced_combinations():
 
 
 def main():
-    """
-    Execute the complete strategy suite demonstration.
+    """Execute complete strategy suite demonstration.
     
-    This is the main orchestration function that runs all demonstration
-    modules in sequence, providing a comprehensive tour of the framework's
-    capabilities. It serves as both an educational tool and a practical
-    guide for understanding the full potential of the trading system.
-    
-    Demonstration Sequence:
-    ======================
-    1. **Individual Strategies**: Core strategy implementations
-    2. **Strategy Combinations**: Ensemble learning methods
-    3. **Regime-Gated Systems**: Adaptive trading mechanisms
-    4. **Sentiment Overlays**: Behavioral finance integration
-    5. **Batch Processing**: Systematic optimization workflows
-    6. **Advanced Combinations**: Hierarchical system architecture
-    
-    Educational Flow:
-    ================
-    The demonstration follows a logical progression from simple to complex:
-    - Start with individual strategy understanding
-    - Progress to combination methodologies
-    - Explore adaptive and regime-aware systems
-    - Integrate behavioral finance concepts
-    - Demonstrate systematic optimization
-    - Conclude with advanced architectures
-    
-    Error Handling:
-    ==============
-    - Comprehensive exception handling
-    - Graceful degradation on errors
-    - Detailed error reporting
-    - Continuation despite individual failures
-    
-    Output Summary:
-    ==============
-    The demonstration provides:
-    - Performance metrics for all strategies
-    - Educational explanations of concepts
-    - Practical implementation examples
-    - Best practice recommendations
-    - Next steps for further development
+    Runs all demo modules in sequence: individual strategies, combinations,
+    regime-gated systems, sentiment overlays, and batch optimization.
     """
     print("🏛️  QUANT SUITE WAR ROOM: STRATEGY ARSENAL DEMO")
     print("=" * 80)

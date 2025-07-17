@@ -64,7 +64,7 @@ Can be used as decorator or wrapper class to "regime-gate" any signal.
 import pandas as pd
 import numpy as np
 from typing import Dict, Any, Optional, Callable
-from .base import BaseStrategy
+from ..base import BaseStrategy
 import logging
 
 
@@ -376,6 +376,9 @@ class RegimeGatedStrategy(BaseStrategy):
     ```
     """
     
+    # Strategy metadata for auto-registration
+    strategy_category = 'meta'
+    
     def __init__(self, base_strategy: BaseStrategy, regime_detector: RegimeDetector):
         """Initialize regime-gated strategy wrapper.
         
@@ -571,6 +574,9 @@ class RegimeSwitchStrategy(BaseStrategy):
     )
     ```
     """
+    
+    # Strategy metadata for auto-registration
+    strategy_category = 'meta'
     
     def __init__(self, 
                  trend_strategy: BaseStrategy,

@@ -1,136 +1,16 @@
-"""
-Batch Backtest System: Hyperparameter Sweep Engine for Trading Strategy Optimization
+"""Batch backtesting system for trading strategy hyperparameter optimization.
 
-This module implements an industrial-grade hyperparameter sweep system that systematically
-tests trading strategies across multiple parameter combinations to identify optimal configurations.
-The system is designed for quantitative researchers and algorithmic traders seeking to
-optimize their strategies through comprehensive parameter space exploration.
+Systematically tests trading strategies across multiple parameter combinations
+using subprocess-based execution for fault tolerance.
 
-Key Features:
-============
-
-1. **Exhaustive Parameter Grid Search**
-   - Tests all combinations of stop-loss, take-profit, position sizing, and max drawdown limits
-   - Supports multiple tickers for cross-asset validation
-   - Configurable parameter ranges for flexible experimentation
-
-2. **Robust Execution Framework**
-   - Subprocess-based execution for isolation and fault tolerance
-   - Comprehensive error handling and logging
-   - Timeout protection against hanging processes
-   - Progress tracking and real-time feedback
-
-3. **Multi-Format Output Generation**
-   - CSV summary for quick analysis and spreadsheet integration
-   - JSON detailed results for programmatic access
-   - Real-time logging for monitoring execution progress
-
-4. **Performance Analytics Integration**
-   - Automatic top performer identification
-   - Statistical summaries across all runs
-   - Success rate tracking and failure analysis
-
-Architecture:
-============
-
-The system follows a pipeline architecture:
-1. **Parameter Grid Generation** - Creates all possible parameter combinations
-2. **Execution Engine** - Runs individual backtests via subprocess calls
-3. **Results Aggregation** - Collects and parses performance metrics
-4. **Output Generation** - Exports results in multiple formats
-5. **Analytics Layer** - Provides insights and top performer identification
-
-Usage Examples:
-===============
-
-Basic Usage:
-```python
-# Run full hyperparameter sweep
-python batch_backtest.py
-
-# Quick test with reduced parameters
-python batch_backtest.py --quick
-
-# Custom ticker list
-python batch_backtest.py --tickers AAPL MSFT GOOGL
-
-# Combine flags
-python batch_backtest.py --quick --tickers SPY QQQ
-```
-
-Advanced Integration:
-```python
-# Programmatic usage
-from batch_backtest import run_batch_backtest, run_single_backtest
-
-# Single backtest
-result = run_single_backtest("AAPL", 0.05, 0.10, 0.20, 1.0)
-
-# Full sweep
-run_batch_backtest()
-```
-
-Parameter Space:
-===============
-
-The system explores the following parameter dimensions:
-
-- **Tickers**: Multiple assets for cross-validation
-- **Stop Losses**: Risk management levels (2%, 5%, 10%, None)
-- **Take Profits**: Profit-taking levels (5%, 10%, 20%, None)
-- **Position Sizes**: Capital allocation (100%, 75%, 50%)
-- **Max Drawdowns**: Portfolio protection (None, 15%, 20%, 25%)
-
-Total combinations: |Tickers| × |Stop Losses| × |Take Profits| × |Position Sizes| × |Max Drawdowns|
-
-Output Format:
-=============
-
-CSV Summary includes:
-- All parameter combinations and results
-- Performance metrics (returns, Sharpe ratio, drawdown)
-- Trade statistics (win rate, profit factor, expectancy)
-- Risk metrics (volatility, Calmar ratio, Kelly criterion)
-- Execution status and error tracking
-
-Performance Considerations:
-==========================
-
-- Each combination runs in isolated subprocess for fault tolerance
-- Timeout protection prevents hanging processes
-- Memory-efficient streaming output to handle large parameter spaces
-- Progress logging for long-running sweeps
-- Automatic cleanup of temporary files
-
-Integration Points:
-==================
-
-The system integrates with:
-- backend/momentum_backtest.py (execution engine)
-- analyze_batch_results.py (results analysis)
-- Pandas/Excel (data analysis)
-- Jupyter notebooks (research workflow)
-
-Educational Value:
-=================
-
-This module demonstrates:
-- Industrial hyperparameter optimization techniques
-- Robust subprocess management in Python
-- Large-scale backtesting architecture
-- Performance metrics collection and analysis
-- Error handling in distributed computing contexts
-
-For researchers and practitioners, this system provides a foundation for:
-- Strategy parameter optimization
-- Cross-asset validation
-- Risk management calibration
-- Performance benchmarking
-- Systematic trading development
-
-Author: Strategy Explainer Framework
-Version: 2.0
-License: Educational Use
+Usage:
+    python batch_backtest.py [--quick] [--tickers AAPL MSFT]
+    
+Key Functions:
+    run_batch_backtest(): Execute full parameter sweep
+    run_single_backtest(): Test single parameter combination
+    
+Output: CSV and JSON files with performance metrics for all combinations.
 """
 
 import subprocess
@@ -438,94 +318,10 @@ def run_single_backtest(ticker: str,
 
 
 def run_batch_backtest():
-    """
-    Execute comprehensive hyperparameter sweep across all parameter combinations.
+    """Execute comprehensive hyperparameter sweep across all parameter combinations.
     
-    This is the main orchestration function that coordinates the entire batch
-    backtesting process. It generates all parameter combinations, executes
-    individual backtests, aggregates results, and produces comprehensive
-    output files for analysis.
-    
-    The function implements an industrial-grade batch processing pipeline
-    with robust error handling, progress tracking, and comprehensive
-    logging suitable for production quantitative research workflows.
-    
-    Execution Pipeline:
-    ==================
-    1. **Parameter Grid Generation**: Create all combinations using itertools
-    2. **Progress Tracking**: Monitor execution with detailed logging
-    3. **Batch Execution**: Run individual backtests sequentially
-    4. **Result Aggregation**: Collect and structure all results
-    5. **Output Generation**: Create CSV and JSON output files
-    6. **Analytics**: Generate summary statistics and top performers
-    
-    Parameter Space:
-    ===============
-    The function explores the full Cartesian product of:
-    - Tickers: Multiple assets for cross-validation
-    - Stop Losses: Risk management levels
-    - Take Profits: Profit-taking strategies
-    - Position Sizes: Capital allocation schemes
-    - Max Drawdowns: Portfolio protection limits
-    
-    Total combinations = |Tickers| × |Stop Losses| × |Take Profits| × |Position Sizes| × |Max Drawdowns|
-    
-    Output Files:
-    ============
-    1. **CSV Summary** (batch_summary_TIMESTAMP.csv):
-       - Tabular format for Excel/Pandas analysis
-       - All parameter combinations and results
-       - Performance metrics and trade statistics
-       - Success/failure status for each run
-    
-    2. **JSON Detailed** (batch_detailed_TIMESTAMP.json):
-       - Structured format for programmatic access
-       - Metadata about the batch run
-       - Complete results with nested structure
-       - Error details and execution logs
-    
-    Error Handling:
-    ==============
-    - Individual backtest failures don't halt the batch
-    - Comprehensive error logging for debugging
-    - Success rate tracking and reporting
-    - Graceful degradation on partial failures
-    
-    Performance Monitoring:
-    ======================
-    - Real-time progress updates
-    - Execution time tracking
-    - Memory usage monitoring
-    - Success rate calculations
-    
-    Usage Examples:
-    ==============
-    ```python
-    # Basic usage
-    run_batch_backtest()
-    
-    # Programmatic usage with result capture
-    original_tickers = TICKERS.copy()
-    TICKERS = ["AAPL", "MSFT"]  # Modify global config
-    run_batch_backtest()
-    TICKERS = original_tickers  # Restore
-    ```
-    
-    Integration Points:
-    ==================
-    - Calls run_single_backtest() for individual executions
-    - Outputs compatible with analyze_batch_results.py
-    - Integrates with Pandas for data analysis
-    - Supports Excel for non-technical users
-    
-    Educational Value:
-    =================
-    This function demonstrates:
-    - Large-scale parameter optimization
-    - Robust batch processing architecture
-    - Error handling in distributed systems
-    - Performance monitoring and logging
-    - Data pipeline design patterns
+    Generates parameter grid, runs individual backtests via subprocess calls,
+    aggregates results, and outputs CSV/JSON files for analysis.
     """
     logger.info("🚀 Starting batch backtest hyperparameter sweep...")
     

@@ -80,31 +80,33 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent / "backend"))
 
 # Import UI component modules for modular interface construction
-from components.sidebar import render_sidebar, display_strategy_info, render_run_button
-from components.metrics_cards import (
+from app.components.sidebar import render_sidebar, display_strategy_info, render_run_button
+from app.components.metrics_cards import (
     display_key_metrics, 
     display_detailed_metrics, 
     display_benchmark_comparison,
     create_metrics_summary_chart,
     display_trade_distribution
 )
-from components.charts import (
+from app.components.charts import (
     create_equity_curve_chart,
-    create_drawdown_chart,
+    create_underwater_drawdown_chart,
     create_returns_distribution_chart,
     create_price_and_signals_chart,
     create_rolling_metrics_chart,
-    create_monthly_returns_heatmap
+    create_monthly_returns_heatmap,
+    create_trade_distribution_chart
 )
+from app.components.enhanced_analytics_layout import render_enhanced_analytics
 
 # Import backend trading system components
 # These modules provide the core functionality for strategy analysis
 try:
-    from momentum_backtest import MomentumBacktest
-    from visualize import create_performance_charts
-    from data_loader import DataLoader
-    from metrics import PerformanceMetrics
-    from simulate import TradingSimulator
+    from backend.strategies import SmaEmaRsiStrategy
+    from backend.visualize import create_performance_charts
+    from backend.data_loader import DataLoader
+    from backend.metrics import PerformanceMetrics
+    from backend.simulate import TradingSimulator
 except ImportError as e:
     # Graceful error handling for missing dependencies
     st.error(f"Error importing backend modules: {e}")
@@ -164,78 +166,156 @@ def main():
 
 def display_welcome_screen():
     """
-    Display an engaging welcome screen for new users.
+    Display a professional welcome screen showcasing the application's capabilities.
     
     Purpose:
-    - Introduce users to the application's capabilities
-    - Provide clear guidance on how to get started
-    - Showcase key features and expected outcomes
-    - Set appropriate expectations for analysis results
-    
-    Design Elements:
-    - Centered layout for focus
-    - Step-by-step instructions for clarity
-    - Feature highlights to build excitement
-    - Sample visualization to demonstrate value
-    - Helpful tips for optimal user experience
-    
-    Educational Value:
-    - Explains different strategy categories available
-    - Sets expectations for analysis depth and quality
-    - Demonstrates the type of insights users will receive
+    - Professional introduction to institutional-grade features
+    - Clear guidance for getting started with analysis
+    - Showcase advanced features and professional presentation
+    - Set expectations for comprehensive analysis results
     """
-    # Create centered layout for focused presentation
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # Professional header with gradient styling
+    st.markdown("""
+    <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; margin-bottom: 30px;">
+        <h1 style="color: white; margin: 0; font-size: 2.5em;">🚀 Professional Strategy Analyzer</h1>
+        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9; font-size: 1.2em;">Institutional-grade backtesting with AI-powered insights</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Feature showcase with professional layout
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        ### 🎯 Get Started
+        
+        **Professional Workflow:**
+        1. **📊 Select Strategy & Risk Profile**
+           - Choose from momentum, mean reversion, or breakout strategies
+           - Pick Conservative, Moderate, or Aggressive presets
+        
+        2. **📈 Configure Analysis**
+           - Select ticker symbol and time period
+           - Choose benchmark for comparison
+           - Set advanced analysis options
+        
+        3. **🚀 Run Professional Analysis**
+           - Comprehensive performance metrics
+           - Risk analysis and drawdown statistics
+           - AI-powered insights and explanations
+        """)
     
     with col2:
-        # Main welcome content with clear value proposition
         st.markdown("""
-        ## 🚀 Welcome to Strategy Analyzer
+        ### 📊 Professional Features
         
-        **Get started by:**
-        1. **Select a strategy** from the sidebar
-        2. **Configure parameters** to match your preferences
-        3. **Choose your data** (symbol and date range)
-        4. **Click "Run Analysis"** to see results
+        **Advanced Analytics:**
+        - 📈 **Tabbed Results Layout**
+        - 📋 **Comprehensive Metrics**
+        - 🎯 **Trade-Level Analysis**
+        - 🤖 **AI-Powered Insights**
         
-        ### 📊 What you'll get:
-        - **Comprehensive performance metrics**
-        - **Interactive charts and visualizations**
-        - **Risk analysis and drawdown statistics**
-        - **AI-powered strategy explanation**
-        - **Benchmark comparison**
+        **Risk Management:**
+        - ⚠️ **Value at Risk (VaR)**
+        - 📉 **Drawdown Analysis**
+        - 🔗 **Correlation Studies**
+        - 🔥 **Stress Testing**
         
-        ### 🎯 Available Strategies:
-        - **Momentum**: Trend-following strategies
-        - **Mean Reversion**: Counter-trend strategies  
-        - **Breakout**: Volatility-based strategies
-        
-        Start by selecting a strategy from the sidebar! 👈
+        **Professional Output:**
+        - 💾 **Export Capabilities**
+        - 📄 **PDF Reports**
+        - 📊 **Interactive Charts**
         """)
+    
+    with col3:
+        st.markdown("""
+        ### 🎯 Strategy Categories
         
-        # Sample visualization to demonstrate expected output quality
-        st.markdown("### 📈 Sample Analysis Preview:")
+        **Momentum Strategies:**
+        - Simple momentum with price rate of change
+        - RSI momentum with overbought/oversold levels
         
-        # Create a realistic sample chart showing strategy vs benchmark performance
-        # This helps users understand the type of analysis they'll receive
-        dates = pd.date_range('2023-01-01', periods=100, freq='D')
+        **Mean Reversion:**
+        - Bollinger Bands mean reversion
+        - Z-Score statistical reversion
         
-        # Generate realistic random walk data for demonstration
-        # Strategy shows higher volatility but potentially better returns
-        np.random.seed(42)  # Consistent sample data
-        strategy_returns = np.random.randn(100) * 0.01
-        benchmark_returns = np.random.randn(100) * 0.008
+        **Breakout Strategies:**
+        - Channel breakout systems
+        - Volume-confirmed breakouts
         
-        sample_data = pd.DataFrame({
-            'Strategy': np.cumsum(strategy_returns) + 1,
-            'Benchmark': np.cumsum(benchmark_returns) + 1
-        }, index=dates)
-        
-        # Display sample chart with Streamlit's built-in charting
-        st.line_chart(sample_data)
-        
-        # Important disclaimer to set appropriate expectations
-        st.info("💡 **Tip**: This is just a sample. Your actual analysis will show real market data and strategy performance!")
+        **Risk Profiles:**
+        - 🛡️ **Conservative**: Lower risk, smaller positions
+        - ⚖️ **Moderate**: Balanced risk-reward
+        - 🚀 **Aggressive**: Higher risk, larger positions
+        """)
+    
+    # Professional sample visualization
+    st.markdown("---")
+    st.markdown("### 📈 Sample Professional Analysis")
+    
+    # Create 4-metric preview cards
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric(
+            label="📈 Total Return",
+            value="24.3%",
+            delta="5.2%",
+            help="Sample cumulative return"
+        )
+    
+    with col2:
+        st.metric(
+            label="📊 Sharpe Ratio",
+            value="1.42",
+            delta="0.18",
+            help="Sample risk-adjusted return"
+        )
+    
+    with col3:
+        st.metric(
+            label="⚠️ Max Drawdown",
+            value="8.7%",
+            delta="-2.1%",
+            delta_color="inverse",
+            help="Sample maximum decline"
+        )
+    
+    with col4:
+        st.metric(
+            label="🎯 Win Rate",
+            value="67%",
+            delta="12%",
+            help="Sample winning trades percentage"
+        )
+    
+    # Sample chart showing professional presentation
+    dates = pd.date_range('2023-01-01', periods=252, freq='D')
+    np.random.seed(42)
+    
+    # More realistic market data simulation
+    strategy_returns = np.random.randn(252) * 0.012 + 0.0003
+    benchmark_returns = np.random.randn(252) * 0.008 + 0.0002
+    
+    strategy_equity = (1 + pd.Series(strategy_returns)).cumprod() * 10000
+    benchmark_equity = (1 + pd.Series(benchmark_returns)).cumprod() * 10000
+    
+    sample_data = pd.DataFrame({
+        'Strategy Performance': strategy_equity,
+        'S&P 500 Benchmark': benchmark_equity
+    }, index=dates)
+    
+    st.line_chart(sample_data, height=400)
+    
+    # Professional call-to-action
+    st.markdown("""
+    <div style='text-align: center; padding: 25px; background-color: #f8f9fa; border-radius: 10px; margin-top: 30px;'>
+        <h3 style='color: #333; margin-bottom: 15px;'>Ready for Professional Analysis? 🚀</h3>
+        <p style='margin: 0; color: #666; font-size: 1.1em;'>
+            Configure your strategy in the sidebar and click <strong>"Run Analysis"</strong> to generate comprehensive institutional-grade results.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def run_analysis(config: Dict[str, Any]):
@@ -440,22 +520,22 @@ def initialize_strategy(config: Dict[str, Any]):
     # Strategy factory implementation with parameter injection
     if strategy_type == 'momentum':
         # Initialize momentum-based strategy with trend-following logic
-        return MomentumBacktest(
-            lookback_period=parameters.get('lookback_period', 20),  # Default: 20-day lookback
-            threshold=parameters.get('threshold', 0.02),  # Default: 2% threshold
-            position_size=parameters.get('position_size', 0.1),  # Default: 10% position
-            stop_loss=parameters.get('stop_loss', 0.05),  # Default: 5% stop loss
-            take_profit=parameters.get('take_profit', 0.10)  # Default: 10% take profit
+        return SmaEmaRsiStrategy(
+            fast_period=parameters.get('lookback_period', 20),  # Default: 20-day lookback
+            slow_period=parameters.get('slow_period', 50),  # Default: 50-day slow MA
+            rsi_period=parameters.get('rsi_period', 14),  # Default: 14-day RSI
+            rsi_oversold=parameters.get('rsi_oversold', 30),  # Default: 30 oversold
+            rsi_overbought=parameters.get('rsi_overbought', 70)  # Default: 70 overbought
         )
     else:
         # Default fallback to momentum strategy for unsupported types
         # TODO: Add support for mean reversion and breakout strategies
-        return MomentumBacktest(
-            lookback_period=parameters.get('lookback_period', 20),
-            threshold=parameters.get('threshold', 0.02),
-            position_size=parameters.get('position_size', 0.1),
-            stop_loss=parameters.get('stop_loss', 0.05),
-            take_profit=parameters.get('take_profit', 0.10)
+        return SmaEmaRsiStrategy(
+            fast_period=parameters.get('lookback_period', 20),
+            slow_period=50,
+            rsi_period=14,
+            rsi_oversold=30,
+            rsi_overbought=70
         )
 
 
@@ -468,21 +548,11 @@ def display_results(config: Dict[str, Any],
                    benchmark_metrics: Optional[Dict[str, Any]] = None,
                    benchmark_data: Optional[pd.DataFrame] = None):
     """
-    Display comprehensive analysis results in an organized, interactive format.
+    Display comprehensive analysis results using professional tabbed layout.
     
-    This function creates a complete results dashboard with multiple visualization
-    sections, performance analytics, and export capabilities. The layout is designed
-    for both quick overview and detailed analysis.
-    
-    Results Sections:
-    1. Strategy Information Header
-    2. Key Performance Metrics Cards
-    3. Interactive Financial Charts
-    4. Detailed Performance Analysis
-    5. Benchmark Comparison (if available)
-    6. Trade-Level Analysis
-    7. Risk and Return Distribution Analysis
-    8. Export and Download Options
+    This function creates an institutional-grade results dashboard with organized
+    tabs for different aspects of the analysis, following best practices for
+    financial analysis presentation.
     
     Args:
         config: User configuration dictionary
@@ -493,200 +563,84 @@ def display_results(config: Dict[str, Any],
         strategy_metrics: Comprehensive performance statistics
         benchmark_metrics: Optional benchmark performance for comparison
         benchmark_data: Optional benchmark price data
-        
-    Visualization Philosophy:
-    - Progressive disclosure: Key metrics first, details on demand
-    - Interactive charts for exploration
-    - Multiple perspectives on performance
-    - Export capabilities for further analysis
-    - Mobile-responsive design considerations
-    
-    Educational Elements:
-    - Contextual explanations for metrics
-    - Visual aids for understanding concepts
-    - Comparative analysis for learning
-    - Professional presentation standards
     """
+    from app.components.professional_results_layout import display_professional_results
     
-    # Strategy Information Header
-    # ==========================
-    st.markdown("## 📊 Analysis Results")
+    # Gather GPT insights if AI features are enabled
+    gpt_insights = None
+    if config.get('enable_gpt', False):
+        # This would be populated by AI analysis if available
+        gpt_insights = config.get('gpt_insights', None)
     
-    # Display key strategy and data information prominently
-    st.markdown(f"**Strategy**: {config['strategy']['name']}")
-    st.markdown(f"**Symbol**: {config['data']['symbol']}")
-    st.markdown(f"**Period**: {config['data']['start_date']} to {config['data']['end_date']}")
-    st.markdown("---")
-    
-    # Key Performance Metrics Section
-    # ==============================
-    st.markdown("### 🎯 Key Performance Metrics")
-    # Display high-level metrics in card format for quick assessment
-    display_key_metrics(strategy_metrics)
-    st.markdown("---")
-    
-    # Interactive Charts Section
-    # =========================
-    # Split screen layout for efficient space utilization
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### 📈 Equity Curve")
-        
-        # Prepare benchmark data for comparison if available
-        benchmark_equity = None
-        if benchmark_data is not None and not benchmark_data.empty:
-            # Convert benchmark to same scale as strategy for comparison
-            benchmark_returns = benchmark_data['close'].pct_change().dropna()
-            benchmark_equity = pd.DataFrame({
-                'equity': (1 + benchmark_returns).cumprod() * 100000
-            }, index=benchmark_returns.index)
-        
-        # Create interactive equity curve with benchmark overlay
-        equity_chart = create_equity_curve_chart(
-            equity_curve, 
-            benchmark_equity, 
-            config['trading']['benchmark']
-        )
-        st.plotly_chart(equity_chart, use_container_width=True)
-    
-    with col2:
-        st.markdown("### ⚠️ Drawdown Analysis")
-        
-        # Display drawdown chart for risk assessment
-        # Drawdowns show peak-to-trough declines in portfolio value
-        drawdown_chart = create_drawdown_chart(equity_curve)
-        st.plotly_chart(drawdown_chart, use_container_width=True)
-    
-    # Price Action and Trading Signals Visualization
-    # =============================================
-    st.markdown("### 📊 Price Action & Trading Signals")
-    
-    # Create comprehensive price chart with signal overlays
-    # This helps users understand when and why trades were executed
-    signals_chart = create_price_and_signals_chart(
-        price_data, 
-        signals, 
-        f"{config['data']['symbol']} - {config['strategy']['name']}"
+    # Use professional tabbed layout for results
+    display_professional_results(
+        config=config,
+        price_data=price_data,
+        signals=signals,
+        equity_curve=equity_curve,
+        trades=trades,
+        strategy_metrics=strategy_metrics,
+        benchmark_metrics=benchmark_metrics,
+        benchmark_data=benchmark_data,
+        gpt_insights=gpt_insights
     )
-    st.plotly_chart(signals_chart, use_container_width=True)
     
-    # Detailed Performance Analysis Section
-    # ===================================
-    st.markdown("### 📈 Detailed Performance Analysis")
+    # Additional Export Section
+    # ========================
+    st.markdown("---")
+    st.markdown("### 💾 Export Data")
+    st.markdown("Download analysis results for further processing.")
     
-    # Show comprehensive metrics in organized format
-    display_detailed_metrics(strategy_metrics)
-    
-    # Benchmark Comparison Section
-    # ===========================
-    if benchmark_metrics:
-        # Display side-by-side comparison with benchmark
-        display_benchmark_comparison(
-            strategy_metrics, 
-            benchmark_metrics, 
-            config['trading']['benchmark']
-        )
-    
-    # Trade Analysis Section
-    # =====================
-    if not trades.empty:
-        # Analyze trade distribution and patterns
-        display_trade_distribution(trades)
-    
-    # Additional Advanced Visualizations
-    # =================================
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### 📊 Performance Overview")
-        
-        # Radar chart showing multiple performance dimensions
-        radar_chart = create_metrics_summary_chart(strategy_metrics)
-        st.plotly_chart(radar_chart, use_container_width=True)
-    
-    with col2:
-        st.markdown("### 📅 Monthly Returns")
-        
-        # Monthly returns heatmap for seasonality analysis
-        if not equity_curve.empty:
-            returns = equity_curve['equity'].pct_change().dropna()
-            
-            # Only show monthly analysis with sufficient data
-            if len(returns) > 30:
-                monthly_chart = create_monthly_returns_heatmap(returns)
-                st.plotly_chart(monthly_chart, use_container_width=True)
-            else:
-                st.info("Insufficient data for monthly returns analysis (need > 30 days)")
-    
-    # Rolling Performance Metrics
-    # ===========================
-    st.markdown("### 📈 Rolling Performance Metrics")
-    
-    # Display rolling metrics only with sufficient data for statistical validity
-    if len(equity_curve) > 252:  # Approximately one year of trading days
-        rolling_chart = create_rolling_metrics_chart(equity_curve, window=60)
-        st.plotly_chart(rolling_chart, use_container_width=True)
-    else:
-        st.info("Insufficient data for rolling metrics analysis (need > 252 days)")
-    
-    # Returns Distribution Analysis
-    # ============================
-    st.markdown("### 📊 Returns Distribution Analysis")
-    
-    # Analyze return distribution characteristics
-    returns = equity_curve['equity'].pct_change().dropna()
-    if len(returns) > 30:
-        # Create distribution chart with statistical overlays
-        dist_chart = create_returns_distribution_chart(returns)
-        st.plotly_chart(dist_chart, use_container_width=True)
-    else:
-        st.info("Insufficient data for returns distribution analysis")
-    
-    # Export and Download Section
-    # ===========================
-    st.markdown("### 💾 Download Results")
-    
-    # Provide multiple export formats for further analysis
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Export performance metrics as CSV
-        if st.button("📊 Download Metrics CSV"):
-            # Convert metrics dictionary to DataFrame for export
-            metrics_df = pd.DataFrame([strategy_metrics]).T
-            metrics_df.columns = ['Value']
-            csv = metrics_df.to_csv()
-            
-            # Create download button with appropriate filename
+        # Export trading signals
+        if signals is not None and len(signals) > 0:
+            csv = signals.to_csv()
             st.download_button(
-                label="Download Metrics",
+                label="⬇️ Download Signals CSV",
                 data=csv,
-                file_name=f"{config['data']['symbol']}_metrics.csv",
-                mime="text/csv"
+                file_name=f"signals_{config['data']['symbol']}_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                use_container_width=True
             )
     
     with col2:
-        # Export trade records as CSV
-        if st.button("💼 Download Trades CSV") and not trades.empty:
-            csv = trades.to_csv()
+        # Export price data with indicators
+        if st.button("📈 Export Price Data", use_container_width=True):
+            csv = price_data.to_csv()
             st.download_button(
-                label="Download Trades",
+                label="⬇️ Download Price Data CSV",
                 data=csv,
-                file_name=f"{config['data']['symbol']}_trades.csv",
-                mime="text/csv"
+                file_name=f"price_data_{config['data']['symbol']}_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                use_container_width=True
             )
     
     with col3:
-        # Export equity curve data as CSV
-        if st.button("📈 Download Equity CSV"):
-            csv = equity_curve.to_csv()
+        # Export trade records (if available)
+        if not trades.empty and st.button("📋 Export Trade Records", use_container_width=True):
+            csv = trades.to_csv()
             st.download_button(
-                label="Download Equity Curve",
+                label="⬇️ Download Trades CSV",
                 data=csv,
-                file_name=f"{config['data']['symbol']}_equity.csv",
-                mime="text/csv"
+                file_name=f"trades_{config['data']['symbol']}_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                use_container_width=True
             )
+        elif trades.empty:
+            st.info("No individual trades to export")
+    
+    # Analysis Summary Footer
+    # ======================
+    st.markdown("---")
+    st.markdown("""
+    <div style='text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 8px; margin-top: 20px;'>
+        <p style='margin: 0; color: #6c757d; font-style: italic;'>
+            📈 Analysis completed successfully. Review all sections above for comprehensive strategy evaluation.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # Application Entry Point
